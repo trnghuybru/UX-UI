@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import '../widgets/logo.dart';
+import '../widgets/text_field.dart';
 import 'home_screen.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
+
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  bool _isPasswordVisible = false;
+  bool _isConfPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -12,30 +22,30 @@ class SignupScreen extends StatelessWidget {
         children: [
           // Top right decoration
           Positioned(
-            right: -50,
-            top: -80,
+            right: -100,
+            top: -100,
             child: Container(
-              width: 156,
-              height: 338,
-              decoration: ShapeDecoration(
-                color: const Color(0x0C0058BE),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),
+              width: 300,
+              height: 300,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x330058BE), Color(0x00FFFFFF)],
                 ),
               ),
             ),
           ),
           // Bottom left decoration
           Positioned(
-            left: -20,
-            bottom: -50,
+            left: -80,
+            bottom: -80,
             child: Container(
-              width: 117,
-              height: 253,
-              decoration: ShapeDecoration(
-                color: const Color(0x192170E4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),
+              width: 250,
+              height: 250,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x262170E4), Color(0x00FFFFFF)],
                 ),
               ),
             ),
@@ -50,18 +60,18 @@ class SignupScreen extends StatelessWidget {
                       minHeight: constraints.maxHeight,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 24.0,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 10),
-                          // Logo Area
                           _buildLogoArea(),
                           const SizedBox(height: 24),
-                          // Form Card
                           _buildFormCard(context),
                           const SizedBox(height: 24),
-                          // Bottom Text
                           _buildBottomText(context),
                         ],
                       ),
@@ -77,62 +87,7 @@ class SignupScreen extends StatelessWidget {
   }
 
   Widget _buildLogoArea() {
-    return Column(
-      children: [
-        // Logo icon placeholder
-        Container(
-          width: 56,
-          height: 56,
-          child: Stack(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0058BE),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.shield, color: Colors.white, size: 30),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFB2C36),
-                    border: Border.all(color: Colors.white, width: 2),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'SÓNG CỨU HỘ',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF155DFC),
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.20,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Bảo vệ bạn trước mọi cơn bão',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF424754),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
+    return const LogoWidget();
   }
 
   Widget _buildFormCard(BuildContext context) {
@@ -166,217 +121,88 @@ class SignupScreen extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'Vui lòng điền thông tin để đăng ký',
-            style: TextStyle(
-              color: Color(0xFF424754),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Color(0xFF424754), fontSize: 14),
           ),
           const SizedBox(height: 24),
-          
+
           // Name
-          const Text(
-            'HỌ VÀ TÊN',
-            style: TextStyle(
-              color: Color(0xFF54647A),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.20,
-            ),
-          ),
+          _buildLabel('HỌ VÀ TÊN'),
           const SizedBox(height: 8),
-          _buildTextField(
+          const CustomTextField(
             hintText: 'Nguyễn Văn A',
             icon: Icons.person_outline,
           ),
           const SizedBox(height: 16),
-          
+
           // Email
-          const Text(
-            'EMAIL',
-            style: TextStyle(
-              color: Color(0xFF54647A),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.20,
-            ),
-          ),
+          _buildLabel('EMAIL'),
           const SizedBox(height: 8),
-          _buildTextField(
+          const CustomTextField(
             hintText: 'email@vi-du.com',
             icon: Icons.email_outlined,
           ),
           const SizedBox(height: 16),
-          
+
           // Password
-          const Text(
-            'MẬT KHẨU',
-            style: TextStyle(
-              color: Color(0xFF54647A),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.20,
-            ),
-          ),
+          _buildLabel('MẬT KHẨU'),
           const SizedBox(height: 8),
-          _buildTextField(
+          CustomTextField(
             hintText: '••••••••',
             icon: Icons.lock_outline,
-            obscureText: true,
-            suffixIcon: Icons.visibility_off_outlined,
+            obscureText: !_isPasswordVisible,
+            suffixIcon: _isPasswordVisible
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            onSuffixIconPressed: () {
+              setState(() => _isPasswordVisible = !_isPasswordVisible);
+            },
           ),
           const SizedBox(height: 16),
 
           // Confirm Password
-          const Text(
-            'XÁC NHẬN MẬT KHẨU',
-            style: TextStyle(
-              color: Color(0xFF54647A),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.20,
-            ),
-          ),
+          _buildLabel('XÁC NHẬN MẬT KHẨU'),
           const SizedBox(height: 8),
-          _buildTextField(
+          CustomTextField(
             hintText: '••••••••',
             icon: Icons.lock_outline,
-            obscureText: true,
-            suffixIcon: Icons.visibility_off_outlined,
+            obscureText: !_isConfPasswordVisible,
+            suffixIcon: _isConfPasswordVisible
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            onSuffixIconPressed: () {
+              setState(() => _isConfPasswordVisible = !_isConfPasswordVisible);
+            },
           ),
           const SizedBox(height: 16),
 
           // Terms and Policy
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: true,
-                  onChanged: (val) {},
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  activeColor: const Color(0xFF0058BE),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: 'Tôi đồng ý với các ',
-                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
-                      ),
-                      const TextSpan(
-                        text: 'Điều khoản',
-                        style: TextStyle(color: Color(0xFF0058BE), fontSize: 13, fontWeight: FontWeight.w700, height: 1.5),
-                      ),
-                      const TextSpan(
-                        text: ' và ',
-                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
-                      ),
-                      const TextSpan(
-                        text: 'Chính sách',
-                        style: TextStyle(color: Color(0xFF0058BE), fontSize: 13, fontWeight: FontWeight.w700, height: 1.5),
-                      ),
-                      const TextSpan(
-                        text: '.',
-                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildTermsRow(),
           const SizedBox(height: 24),
 
           // Signup Button
-          Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0058BE), Color(0xFF2170E4)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x260058BE),
-                  blurRadius: 32,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: const Center(
-                  child: Text(
-                    'Đăng ký ngay',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildSignupButton(context),
           const SizedBox(height: 24),
-          // Or Signup With
-          Row(
-            children: [
-              const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: const Text(
-                      'HOẶC ĐĂNG KÝ BẰNG',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF727785),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
-            ],
-          ),
+
+          // Divider
+          _buildSocialDivider(),
           const SizedBox(height: 20),
+
           // Social Buttons
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: _buildSocialButton(
                   title: 'Facebook',
-                  // Using correct PNG urls to prevent SVG error
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/512px-2021_Facebook_icon.svg.png',
+                  iconUrl:
+                      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildSocialButton(
                   title: 'Google',
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/512px-Google_%22G%22_logo.svg.png',
+                  iconUrl:
+                      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
                 ),
               ),
             ],
@@ -386,44 +212,130 @@ class SignupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField({
-    required String hintText,
-    required IconData icon,
-    bool obscureText = false,
-    IconData? suffixIcon,
-  }) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F4F6),
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Color(0xFF54647A),
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.20,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFC2C6D6), size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              obscureText: obscureText,
-              style: const TextStyle(
-                color: Color(0xFF191C1E),
-                fontSize: 16,
+    );
+  }
+
+  Widget _buildTermsRow() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: Checkbox(
+            value: true,
+            onChanged: (val) {},
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            activeColor: const Color(0xFF0058BE),
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Expanded(
+          child: Text.rich(
+            TextSpan(
+              style: TextStyle(
+                color: Color(0xFF424754),
+                fontSize: 13,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
               ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: hintText,
-                hintStyle: const TextStyle(
-                  color: Color(0xFFC2C6D6),
-                  fontSize: 16,
+              children: [
+                TextSpan(text: 'Tôi đồng ý với các '),
+                TextSpan(
+                  text: 'Điều khoản',
+                  style: TextStyle(
+                    color: Color(0xFF0058BE),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
+                TextSpan(text: ' và '),
+                TextSpan(
+                  text: 'Chính sách',
+                  style: TextStyle(
+                    color: Color(0xFF0058BE),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextSpan(text: '.'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignupButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0058BE), Color(0xFF2170E4)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x260058BE),
+            blurRadius: 32,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: const Center(
+            child: Text(
+              'Đăng ký ngay',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (suffixIcon != null)
-            Icon(suffixIcon, color: const Color(0xFFC2C6D6), size: 20),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSocialDivider() {
+    return const Row(
+      children: [
+        Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'HOẶC ĐĂNG KÝ BẰNG',
+            style: TextStyle(
+              color: Color(0xFF727785),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.20,
+            ),
+          ),
+        ),
+        Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
+      ],
     );
   }
 
@@ -443,7 +355,12 @@ class SignupScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.network(iconUrl, width: 20, height: 20, errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, size: 20)),
+              Image.network(
+                iconUrl,
+                width: 20,
+                height: 20,
+                errorBuilder: (c, e, s) => const Icon(Icons.error, size: 20),
+              ),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -461,21 +378,15 @@ class SignupScreen extends StatelessWidget {
   }
 
   Widget _buildBottomText(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
           'Đã có tài khoản? ',
-          style: TextStyle(
-            color: Color(0xFF424754),
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-          ),
+          style: TextStyle(color: Color(0xFF424754), fontSize: 14),
         ),
         GestureDetector(
-          onTap: () {
-            Navigator.pop(context); // Go back to login screen
-          },
+          onTap: () => Navigator.pop(context),
           child: const Text(
             'Đăng nhập ngay',
             style: TextStyle(

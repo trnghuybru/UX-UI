@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import '../widgets/logo.dart';
+import '../widgets/text_field.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -13,30 +22,30 @@ class LoginScreen extends StatelessWidget {
         children: [
           // Top right decoration
           Positioned(
-            right: -50,
-            top: -80,
+            right: -100,
+            top: -100,
             child: Container(
-              width: 156,
-              height: 338,
-              decoration: ShapeDecoration(
-                color: const Color(0x0C0058BE),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),
+              width: 300,
+              height: 300,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x330058BE), Color(0x00FFFFFF)],
                 ),
               ),
             ),
           ),
           // Bottom left decoration
           Positioned(
-            left: -20,
-            bottom: -50,
+            left: -80,
+            bottom: -80,
             child: Container(
-              width: 117,
-              height: 253,
-              decoration: ShapeDecoration(
-                color: const Color(0x192170E4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),
+              width: 250,
+              height: 250,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x262170E4), Color(0x00FFFFFF)],
                 ),
               ),
             ),
@@ -51,18 +60,18 @@ class LoginScreen extends StatelessWidget {
                       minHeight: constraints.maxHeight,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 24.0,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 20),
-                          // Logo Area
                           _buildLogoArea(),
                           const SizedBox(height: 32),
-                          // Form Card
                           _buildFormCard(context),
                           const SizedBox(height: 32),
-                          // Bottom Text
                           _buildBottomText(context),
                         ],
                       ),
@@ -78,62 +87,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildLogoArea() {
-    return Column(
-      children: [
-        // Logo icon placeholder
-        Container(
-          width: 56,
-          height: 56,
-          child: Stack(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0058BE), // Just a placeholder color for the icon background
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.shield, color: Colors.white, size: 30),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFB2C36),
-                    border: Border.all(color: Colors.white, width: 2),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'SÓNG CỨU HỘ',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF155DFC),
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.20,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Bảo vệ bạn trước mọi cơn bão',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF424754),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
+    return const LogoWidget();
   }
 
   Widget _buildFormCard(BuildContext context) {
@@ -167,13 +121,9 @@ class LoginScreen extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'Vui lòng đăng nhập để tiếp tục',
-            style: TextStyle(
-              color: Color(0xFF424754),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Color(0xFF424754), fontSize: 14),
           ),
           const SizedBox(height: 32),
-          // Email
           const Text(
             'EMAIL',
             style: TextStyle(
@@ -184,12 +134,11 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _buildTextField(
+          const CustomTextField(
             hintText: 'email@vi-du.com',
             icon: Icons.email_outlined,
           ),
           const SizedBox(height: 20),
-          // Password
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -216,142 +165,113 @@ class LoginScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          _buildTextField(
+          CustomTextField(
             hintText: '••••••••',
             icon: Icons.lock_outline,
-            obscureText: true,
-            suffixIcon: Icons.visibility_off_outlined,
+            obscureText: !_isPasswordVisible,
+            suffixIcon: _isPasswordVisible
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            onSuffixIconPressed: () {
+              setState(() {
+                _isPasswordVisible = !_isPasswordVisible;
+              });
+            },
           ),
           const SizedBox(height: 32),
-          // Login Button
-          Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0058BE), Color(0xFF2170E4)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x260058BE),
-                  blurRadius: 32,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: const Center(
-                  child: Text(
-                    'Đăng nhập',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildLoginButton(context),
           const SizedBox(height: 32),
-          // Or Login With
-          Row(
-            children: [
-              const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: const Text(
-                      'HOẶC ĐĂNG NHẬP BẰNG',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF727785),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
-            ],
-          ),
+          _buildDivider(),
           const SizedBox(height: 24),
-          // Social Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: _buildSocialButton(
-                  title: 'Facebook',
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildSocialButton(
-                  title: 'Google',
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
-                ),
-              ),
-            ],
-          ),
+          _buildSocialRow(),
         ],
       ),
     );
   }
 
-  Widget _buildTextField({
-    required String hintText,
-    required IconData icon,
-    bool obscureText = false,
-    IconData? suffixIcon,
-  }) {
+  Widget _buildLoginButton(BuildContext context) {
     return Container(
-      height: 52,
+      width: double.infinity,
+      height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F4F6),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0058BE), Color(0xFF2170E4)],
+        ),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x260058BE),
+            blurRadius: 32,
+            offset: Offset(0, 12),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFC2C6D6), size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              obscureText: obscureText,
-              style: const TextStyle(
-                color: Color(0xFF191C1E),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: const Center(
+            child: Text(
+              'Đăng nhập',
+              style: TextStyle(
+                color: Colors.white,
                 fontSize: 16,
-              ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: hintText,
-                hintStyle: const TextStyle(
-                  color: Color(0xFFC2C6D6),
-                  fontSize: 16,
-                ),
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (suffixIcon != null)
-            Icon(suffixIcon, color: const Color(0xFFC2C6D6), size: 20),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'HOẶC ĐĂNG NHẬP BẰNG',
+            style: TextStyle(
+              color: Color(0xFF727785),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.20,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
+      ],
+    );
+  }
+
+  Widget _buildSocialRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: _buildSocialButton(
+            title: 'Facebook',
+            iconUrl:
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildSocialButton(
+            title: 'Google',
+            iconUrl:
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
+          ),
+        ),
+      ],
     );
   }
 
@@ -394,11 +314,7 @@ class LoginScreen extends StatelessWidget {
       children: [
         const Text(
           'Chưa có tài khoản? ',
-          style: TextStyle(
-            color: Color(0xFF424754),
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-          ),
+          style: TextStyle(color: Color(0xFF424754), fontSize: 14),
         ),
         GestureDetector(
           onTap: () {
