@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_screen.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -313,7 +314,12 @@ class SignupScreen extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                },
                 borderRadius: BorderRadius.circular(12),
                 child: const Center(
                   child: Text(

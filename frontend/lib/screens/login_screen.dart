@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -59,7 +60,7 @@ class LoginScreen extends StatelessWidget {
                           _buildLogoArea(),
                           const SizedBox(height: 32),
                           // Form Card
-                          _buildFormCard(),
+                          _buildFormCard(context),
                           const SizedBox(height: 32),
                           // Bottom Text
                           _buildBottomText(context),
@@ -135,7 +136,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
@@ -242,7 +243,12 @@ class LoginScreen extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                },
                 borderRadius: BorderRadius.circular(12),
                 child: const Center(
                   child: Text(
