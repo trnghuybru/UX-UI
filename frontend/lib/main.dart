@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/login_screen.dart';
 
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
 void main() {
   runApp(const MyApp());
 }
@@ -12,30 +14,48 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        textTheme: GoogleFonts.manropeTextTheme(
-          Theme.of(context).textTheme,
-        ),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const LoginScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          title: 'Sóng Cứu Hộ',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            scaffoldBackgroundColor: const Color(0xFFF7F9FB),
+            cardColor: Colors.white,
+            dividerColor: const Color(0xFFE6E8EA),
+            primaryColor: const Color(0xFF0058BE),
+            textTheme: GoogleFonts.manropeTextTheme(
+              ThemeData.light().textTheme,
+            ).apply(
+              bodyColor: const Color(0xFF191C1E),
+              displayColor: const Color(0xFF191C1E),
+            ),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF0058BE),
+              brightness: Brightness.light,
+            ),
+          ),
+          darkTheme: ThemeData(
+            scaffoldBackgroundColor: const Color(0xFF1A1C1E),
+            cardColor: const Color(0xFF282A2D),
+            dividerColor: const Color(0xFF3C4043),
+            primaryColor: const Color(0xFF66A3FF),
+            textTheme: GoogleFonts.manropeTextTheme(
+              ThemeData.dark().textTheme,
+            ).apply(
+              bodyColor: Colors.white,
+              displayColor: Colors.white,
+            ),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF66A3FF),
+              brightness: Brightness.dark,
+            ),
+          ),
+          themeMode: currentMode,
+          home: const LoginScreen(),
+        );
+      },
     );
   }
 }

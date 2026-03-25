@@ -3,6 +3,7 @@ import '../screens/home_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/sos_screen.dart';
 import '../screens/news_screen.dart';
+import '../screens/profile_screen.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -16,6 +17,7 @@ class CustomBottomNavBar extends StatelessWidget {
     if (index == 1) page = const MapScreen();
     if (index == 2) page = const NewsScreen();
     if (index == 3) page = const SosScreen();
+    if (index == 4) page = const ProfileScreen();
 
     if (page != null) {
       Navigator.pushReplacement(
