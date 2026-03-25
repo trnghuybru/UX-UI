@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatelessWidget {
+  const SignupScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +53,13 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           // Logo Area
                           _buildLogoArea(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
                           // Form Card
-                          _buildFormCard(),
-                          const SizedBox(height: 32),
+                          _buildFormCard(context),
+                          const SizedBox(height: 24),
                           // Bottom Text
                           _buildBottomText(context),
                         ],
@@ -89,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF0058BE), // Just a placeholder color for the icon background
+                  color: Color(0xFF0058BE),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.shield, color: Colors.white, size: 30),
@@ -135,10 +134,10 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
@@ -155,7 +154,7 @@ class LoginScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Chào mừng trở lại',
+            'Đăng ký tài khoản',
             style: TextStyle(
               color: Color(0xFF191C1E),
               fontSize: 20,
@@ -165,13 +164,31 @@ class LoginScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Vui lòng đăng nhập để tiếp tục',
+            'Vui lòng điền thông tin để đăng ký',
             style: TextStyle(
               color: Color(0xFF424754),
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          
+          // Name
+          const Text(
+            'HỌ VÀ TÊN',
+            style: TextStyle(
+              color: Color(0xFF54647A),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.20,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildTextField(
+            hintText: 'Nguyễn Văn A',
+            icon: Icons.person_outline,
+          ),
+          const SizedBox(height: 16),
+          
           // Email
           const Text(
             'EMAIL',
@@ -187,32 +204,17 @@ class LoginScreen extends StatelessWidget {
             hintText: 'email@vi-du.com',
             icon: Icons.email_outlined,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          
           // Password
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'MẬT KHẨU',
-                style: TextStyle(
-                  color: Color(0xFF54647A),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.20,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: const Text(
-                  'Quên mật khẩu?',
-                  style: TextStyle(
-                    color: Color(0xFF0058BE),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'MẬT KHẨU',
+            style: TextStyle(
+              color: Color(0xFF54647A),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.20,
+            ),
           ),
           const SizedBox(height: 8),
           _buildTextField(
@@ -221,8 +223,77 @@ class LoginScreen extends StatelessWidget {
             obscureText: true,
             suffixIcon: Icons.visibility_off_outlined,
           ),
-          const SizedBox(height: 32),
-          // Login Button
+          const SizedBox(height: 16),
+
+          // Confirm Password
+          const Text(
+            'XÁC NHẬN MẬT KHẨU',
+            style: TextStyle(
+              color: Color(0xFF54647A),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.20,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildTextField(
+            hintText: '••••••••',
+            icon: Icons.lock_outline,
+            obscureText: true,
+            suffixIcon: Icons.visibility_off_outlined,
+          ),
+          const SizedBox(height: 16),
+
+          // Terms and Policy
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: true,
+                  onChanged: (val) {},
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  activeColor: const Color(0xFF0058BE),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Tôi đồng ý với các ',
+                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
+                      ),
+                      const TextSpan(
+                        text: 'Điều khoản',
+                        style: TextStyle(color: Color(0xFF0058BE), fontSize: 13, fontWeight: FontWeight.w700, height: 1.5),
+                      ),
+                      const TextSpan(
+                        text: ' và ',
+                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
+                      ),
+                      const TextSpan(
+                        text: 'Chính sách',
+                        style: TextStyle(color: Color(0xFF0058BE), fontSize: 13, fontWeight: FontWeight.w700, height: 1.5),
+                      ),
+                      const TextSpan(
+                        text: '.',
+                        style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Signup Button
           Container(
             width: double.infinity,
             height: 56,
@@ -246,7 +317,7 @@ class LoginScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: const Center(
                   child: Text(
-                    'Đăng nhập',
+                    'Đăng ký ngay',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -257,8 +328,8 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          // Or Login With
+          const SizedBox(height: 24),
+          // Or Signup With
           Row(
             children: [
               const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
@@ -268,7 +339,7 @@ class LoginScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: const Text(
-                      'HOẶC ĐĂNG NHẬP BẰNG',
+                      'HOẶC ĐĂNG KÝ BẰNG',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF727785),
@@ -283,7 +354,7 @@ class LoginScreen extends StatelessWidget {
               const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           // Social Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -291,14 +362,15 @@ class LoginScreen extends StatelessWidget {
               Expanded(
                 child: _buildSocialButton(
                   title: 'Facebook',
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
+                  // Using correct PNG urls to prevent SVG error
+                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/512px-2021_Facebook_icon.svg.png',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildSocialButton(
                   title: 'Google',
-                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
+                  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/512px-Google_%22G%22_logo.svg.png',
                 ),
               ),
             ],
@@ -365,7 +437,7 @@ class LoginScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.network(iconUrl, width: 20, height: 20),
+              Image.network(iconUrl, width: 20, height: 20, errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, size: 20)),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -387,7 +459,7 @@ class LoginScreen extends StatelessWidget {
       alignment: WrapAlignment.center,
       children: [
         const Text(
-          'Chưa có tài khoản? ',
+          'Đã có tài khoản? ',
           style: TextStyle(
             color: Color(0xFF424754),
             fontSize: 14,
@@ -396,13 +468,10 @@ class LoginScreen extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SignupScreen()),
-            );
+            Navigator.pop(context); // Go back to login screen
           },
           child: const Text(
-            'Đăng ký ngay',
+            'Đăng nhập ngay',
             style: TextStyle(
               color: Color(0xFF0058BE),
               fontSize: 14,
