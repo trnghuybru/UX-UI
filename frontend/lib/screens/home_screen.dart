@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/custom_app_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +16,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
-      appBar: _buildAppBar(),
+      appBar: CustomAppBar(
+        onNotificationPressed: () {
+          setState(() {
+            _isAlertExpanded = !_isAlertExpanded;
+          });
+        },
+      ),
       bottomNavigationBar: const CustomBottomNavBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 48),
@@ -37,38 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: const Color(0xFFF7F9FB),
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      title: const Row(
-        children: [
-          Icon(Icons.waves, color: Color(0xFF0058BE)),
-          SizedBox(width: 8),
-          Text(
-            'Sóng Cứu Hộ',
-            style: TextStyle(
-              color: Color(0xFF0058BE),
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.50,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search, color: Color(0xFF424754)),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: Color(0xFF424754)),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildEmergencyAlertCard() {
     return Container(
