@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isAlertExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +89,11 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.warning_rounded, color: Colors.white, size: 28),
-              SizedBox(width: 12),
-              Expanded(
+              const Icon(Icons.warning_rounded, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
                   'CẢNH BÁO BÃO KHẨN CẤP',
                   style: TextStyle(
@@ -98,41 +105,64 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isAlertExpanded = !_isAlertExpanded;
+                  });
+                },
+                child: Icon(
+                  _isAlertExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Bão số 5 đang đổ bộ trực tiếp vào khu vực của bạn. Hãy di chuyển đến nơi an toàn ngay lập tức.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.90),
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 1.63,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.location_on, color: Color(0xFFB90538), size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'Xem điểm trú ẩn gần nhất',
-                  style: TextStyle(
-                    color: Color(0xFFB90538),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isAlertExpanded
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      Text(
+                        'Bão số 5 đang đổ bộ trực tiếp vào khu vực của bạn. Hãy di chuyển đến nơi an toàn ngay lập tức.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.90),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 1.63,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.location_on, color: Color(0xFFB90538), size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Xem điểm trú ẩn gần nhất',
+                              style: TextStyle(
+                                color: Color(0xFFB90538),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
