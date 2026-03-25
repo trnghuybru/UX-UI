@@ -15,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CustomAppBar(
         onNotificationPressed: () {
           setState(() {
@@ -546,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Color(0xFFDCFCE7),
               shape: BoxShape.circle,
             ),

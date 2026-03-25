@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../main.dart'; // import themeNotifier
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onNotificationPressed;
 
@@ -7,18 +7,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? Colors.white : const Color(0xFF424754);
+    final titleColor = isDark ? const Color(0xFF66A3FF) : const Color(0xFF0058BE);
+
     return AppBar(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       scrolledUnderElevation: 0,
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.waves, color: Color(0xFF0058BE)),
-          SizedBox(width: 8),
+          Icon(Icons.waves, color: titleColor),
+          const SizedBox(width: 8),
           Text(
             'Sóng Cứu Hộ',
             style: TextStyle(
-              color: Color(0xFF0058BE),
+              color: titleColor,
               fontSize: 20,
               fontFamily: 'Manrope',
               fontWeight: FontWeight.w800,
@@ -28,12 +32,27 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeNotifier,
+          builder: (_, ThemeMode currentMode, __) {
+            return IconButton(
+              icon: Icon(
+                currentMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                color: iconColor,
+              ),
+              onPressed: () {
+                themeNotifier.value =
+                    currentMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+              },
+            );
+          },
+        ),
         IconButton(
-          icon: const Icon(Icons.search, color: Color(0xFF424754)),
+          icon: Icon(Icons.search, color: iconColor),
           onPressed: () {},
         ),
         IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: Color(0xFF424754)),
+          icon: Icon(Icons.notifications_outlined, color: iconColor),
           onPressed: onNotificationPressed ?? () {},
         ),
       ],
