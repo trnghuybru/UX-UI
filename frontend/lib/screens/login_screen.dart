@@ -8,7 +8,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Top right decoration
@@ -89,7 +89,7 @@ class LoginScreen extends StatelessWidget {
               Container(
                 width: 56,
                 height: 56,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Color(0xFF0058BE), // Just a placeholder color for the icon background
                   shape: BoxShape.circle,
                 ),
@@ -359,7 +359,7 @@ class LoginScreen extends StatelessWidget {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FB),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0x19C2C6D6), width: 1.27),
       ),

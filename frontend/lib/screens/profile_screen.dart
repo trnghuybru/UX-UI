@@ -18,7 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       body: SingleChildScrollView(
         child: Padding(
@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 96,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFF7F9FB), width: 4),
+                  border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 4),
                   image: const DecorationImage(
                     image: NetworkImage("https://placehold.co/96x96"),
                     fit: BoxFit.cover,
@@ -381,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Color(0xFFEFF6FF),
                         shape: BoxShape.circle,
                       ),

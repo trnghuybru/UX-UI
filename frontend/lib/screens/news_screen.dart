@@ -8,7 +8,7 @@ class NewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
       body: SingleChildScrollView(

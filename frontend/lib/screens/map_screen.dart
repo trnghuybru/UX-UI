@@ -17,7 +17,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
       body: SafeArea(
@@ -202,7 +202,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -304,7 +304,7 @@ class _MapScreenState extends State<MapScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Color(0xFF2E7D32),
             shape: BoxShape.circle,
             boxShadow: [
@@ -662,7 +662,7 @@ class _MapScreenState extends State<MapScreen> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Color(0xFFB90538),
                         shape: BoxShape.circle,
                       ),
