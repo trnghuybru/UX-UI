@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_toggle_bar.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -12,7 +13,13 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   int _selectedFilterIndex = 0;
+  late MaplibreMapController _mapController;
 
+  void _onMapCreated(MaplibreMapController controller) {
+    _mapController = controller;
+  }
+
+  void _onStyleLoadedCallback() {}
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +62,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-
   Widget _buildDynamicMapSection() {
     if (_selectedFilterIndex == 1) {
       return _buildStormMapSection();
@@ -80,15 +86,25 @@ class _MapScreenState extends State<MapScreen> {
             blurRadius: 50,
             offset: Offset(0, 25),
             spreadRadius: -12,
-          )
+          ),
         ],
-        image: const DecorationImage(
-          image: NetworkImage("https://placehold.co/400x500"),
-          fit: BoxFit.cover,
-        ),
       ),
       child: Stack(
         children: [
+          // MAP
+          Positioned.fill(
+            child: MaplibreMap(
+              onMapCreated: _onMapCreated,
+              onStyleLoadedCallback: _onStyleLoadedCallback,
+              styleString:
+                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(21.03357551700003, 105.81911236900004),
+                zoom: 14.0,
+              ),
+            ),
+          ),
+
           // Badges on map
           Positioned(
             left: 120,
@@ -116,7 +132,7 @@ class _MapScreenState extends State<MapScreen> {
                 _buildMapControlButton(Icons.layers_outlined),
                 _buildMapControlButton(Icons.my_location),
                 _buildMapControlButton(
-                  Icons.map, 
+                  Icons.map,
                   backgroundColor: const Color(0xFF0058BE),
                   iconColor: Colors.white,
                 ),
@@ -142,7 +158,7 @@ class _MapScreenState extends State<MapScreen> {
                 color: Color(0x19000000),
                 blurRadius: 3,
                 offset: Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: Text(
@@ -160,7 +176,11 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildMapControlButton(IconData icon, {Color backgroundColor = Colors.white, Color iconColor = const Color(0xFF5A5F6B)}) {
+  Widget _buildMapControlButton(
+    IconData icon, {
+    Color backgroundColor = Colors.white,
+    Color iconColor = const Color(0xFF5A5F6B),
+  }) {
     return Container(
       width: 40,
       height: 40,
@@ -168,8 +188,18 @@ class _MapScreenState extends State<MapScreen> {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Color(0x19000000), blurRadius: 6, offset: Offset(0, 4), spreadRadius: -4),
-          BoxShadow(color: Color(0x19000000), blurRadius: 15, offset: Offset(0, 10), spreadRadius: -3),
+          BoxShadow(
+            color: Color(0x19000000),
+            blurRadius: 6,
+            offset: Offset(0, 4),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Color(0x19000000),
+            blurRadius: 15,
+            offset: Offset(0, 10),
+            spreadRadius: -3,
+          ),
         ],
       ),
       child: Icon(icon, color: iconColor, size: 20),
@@ -189,28 +219,44 @@ class _MapScreenState extends State<MapScreen> {
             color: Color(0x140058BE),
             blurRadius: 32,
             offset: Offset(0, 12),
-          )
+          ),
         ],
       ),
       child: Stack(
         children: [
+          // MAP (GOONG)
           Positioned.fill(
-            child: Image.network(
-              "https://placehold.co/358x340",
-              fit: BoxFit.cover,
+            child: MaplibreMap(
+              onMapCreated: _onMapCreated,
+              onStyleLoadedCallback: _onStyleLoadedCallback,
+              styleString:
+                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(16.047079, 108.206230), // Đà Nẵng
+                zoom: 6.0, // zoom thấp để nhìn vùng bão
+              ),
             ),
           ),
+
+          // GRADIENT OVERLAY
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xE5F7F9FB), Color(0x00F7F9FB), Color(0x00F7F9FB), Color(0xE5F7F9FB)],
+                  colors: [
+                    Color(0xE5F7F9FB),
+                    Color(0x00F7F9FB),
+                    Color(0x00F7F9FB),
+                    Color(0xE5F7F9FB),
+                  ],
                 ),
               ),
             ),
           ),
+
+          // CENTER POINT (tâm bão giả lập)
           Center(
             child: Container(
               width: 32,
@@ -222,6 +268,8 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
+
+          // ZOOM BUTTON
           Positioned(
             right: 16,
             top: 16,
@@ -246,13 +294,24 @@ class _MapScreenState extends State<MapScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFECEEF0),
         borderRadius: BorderRadius.circular(24),
-        image: const DecorationImage(
-          image: NetworkImage("https://placehold.co/400x320"),
-          fit: BoxFit.cover,
-        ),
       ),
       child: Stack(
         children: [
+          // MAP (GOONG)
+          Positioned.fill(
+            child: MaplibreMap(
+              onMapCreated: _onMapCreated,
+              onStyleLoadedCallback: _onStyleLoadedCallback,
+              styleString:
+                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(16.047079, 108.206230), // Đà Nẵng
+                zoom: 13.0,
+              ),
+            ),
+          ),
+
+          // BADGES
           Positioned(
             left: 100,
             top: 80,
@@ -263,13 +322,18 @@ class _MapScreenState extends State<MapScreen> {
             top: 160,
             child: _buildShelterMapBadge('NHÀ VĂN HÓA'),
           ),
+
+          // BUTTON
           Positioned(
             bottom: 24,
             left: 0,
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2E7D32),
                   borderRadius: BorderRadius.circular(9999),
@@ -278,7 +342,7 @@ class _MapScreenState extends State<MapScreen> {
                       color: Color(0x4C2E7D32),
                       blurRadius: 32,
                       offset: Offset(0, 12),
-                    )
+                    ),
                   ],
                 ),
                 child: const Text(
@@ -312,7 +376,7 @@ class _MapScreenState extends State<MapScreen> {
                 color: Color(0x4CFFFFFF),
                 blurRadius: 0,
                 spreadRadius: 4,
-              )
+              ),
             ],
           ),
           child: const Icon(Icons.home, color: Colors.white, size: 16),
@@ -324,7 +388,11 @@ class _MapScreenState extends State<MapScreen> {
             color: Colors.white.withValues(alpha: 0.90),
             borderRadius: BorderRadius.circular(4),
             boxShadow: const [
-              BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))
+              BoxShadow(
+                color: Color(0x0C000000),
+                blurRadius: 2,
+                offset: Offset(0, 1),
+              ),
             ],
           ),
           child: Text(
@@ -377,7 +445,11 @@ class _MapScreenState extends State<MapScreen> {
     return Column(
       spacing: 8,
       children: [
-        _buildAlertLevelItem(const Color(0xFFB90538), 'MỨC ĐỘ 3', 'Nguy hiểm cao'),
+        _buildAlertLevelItem(
+          const Color(0xFFB90538),
+          'MỨC ĐỘ 3',
+          'Nguy hiểm cao',
+        ),
         _buildAlertLevelItem(const Color(0xFFF97316), 'MỨC ĐỘ 2', 'Cảnh báo'),
         _buildAlertLevelItem(const Color(0xFFEAB308), 'MỨC ĐỘ 1', 'Theo dõi'),
       ],
@@ -402,7 +474,11 @@ class _MapScreenState extends State<MapScreen> {
               color: color,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 0, spreadRadius: 4),
+                BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 0,
+                  spreadRadius: 4,
+                ),
               ],
             ),
           ),
@@ -561,7 +637,10 @@ class _MapScreenState extends State<MapScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: issueColor,
                         borderRadius: BorderRadius.circular(6),
@@ -599,12 +678,17 @@ class _MapScreenState extends State<MapScreen> {
               color: const Color(0xFFF2F4F6),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF5A5F6B)),
+            child: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF5A5F6B),
+            ),
           ),
         ],
       ),
     );
   }
+
   // --- TAB GIÓ BÃO --- //
   Widget _buildStormWarningCard() {
     return Container(
@@ -615,7 +699,11 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: const Color(0x19C2C6D6)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))
+          BoxShadow(
+            color: Color(0x0C000000),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
         ],
       ),
       child: Column(
@@ -652,7 +740,10 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFDADB),
                   borderRadius: BorderRadius.circular(9999),
@@ -743,7 +834,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                 ),
-              ]
+              ],
             ],
           ),
         ],
@@ -776,10 +867,26 @@ class _MapScreenState extends State<MapScreen> {
           Column(
             spacing: 12,
             children: [
-              _buildZoneItem('Tâm bão', 'Cực nguy hiểm', const Color(0xFFB90538)),
-              _buildZoneItem('Vùng gần tâm', 'Rất nguy hiểm', const Color(0xFFDC2C4F)),
-              _buildZoneItem('Vùng ảnh hưởng', 'Nguy hiểm', const Color(0xFFF97316)),
-              _buildZoneItem('Vùng ngoại vi', 'Cảnh báo', const Color(0xFFFACC15)),
+              _buildZoneItem(
+                'Tâm bão',
+                'Cực nguy hiểm',
+                const Color(0xFFB90538),
+              ),
+              _buildZoneItem(
+                'Vùng gần tâm',
+                'Rất nguy hiểm',
+                const Color(0xFFDC2C4F),
+              ),
+              _buildZoneItem(
+                'Vùng ảnh hưởng',
+                'Nguy hiểm',
+                const Color(0xFFF97316),
+              ),
+              _buildZoneItem(
+                'Vùng ngoại vi',
+                'Cảnh báo',
+                const Color(0xFFFACC15),
+              ),
             ],
           ),
         ],
@@ -975,7 +1082,11 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0x19C2C6D6)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))
+          BoxShadow(
+            color: Color(0x0C000000),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
         ],
       ),
       child: Column(
@@ -996,7 +1107,11 @@ class _MapScreenState extends State<MapScreen> {
                         color: const Color(0xFFD0E1FB),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(Icons.home_work, color: Color(0xFF0058BE), size: 24),
+                      child: const Icon(
+                        Icons.home_work,
+                        color: Color(0xFF0058BE),
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -1030,7 +1145,10 @@ class _MapScreenState extends State<MapScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(9999),
