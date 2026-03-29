@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Top right decoration
@@ -91,43 +91,45 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildFormCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0x19C2C6D6), width: 1.27),
-        boxShadow: const [
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.27),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x07000000),
+            color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x07000000),
             blurRadius: 48,
-            offset: Offset(0, 20),
+            offset: const Offset(0, 20),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Chào mừng trở lại',
             style: TextStyle(
-              color: Color(0xFF191C1E),
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.50,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Vui lòng đăng nhập để tiếp tục',
-            style: TextStyle(color: Color(0xFF424754), fontSize: 14),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'EMAIL',
             style: TextStyle(
-              color: Color(0xFF54647A),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.20,
@@ -142,10 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'MẬT KHẨU',
                 style: TextStyle(
-                  color: Color(0xFF54647A),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.20,
@@ -153,10 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               GestureDetector(
                 onTap: () {},
-                child: const Text(
+                child: Text(
                   'Quên mật khẩu?',
                   style: TextStyle(
-                    color: Color(0xFF0058BE),
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -190,19 +192,22 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLoginButton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryDimColor = isDark ? const Color(0xFF0F6DF3) : const Color(0xFF2170E4);
+
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0058BE), Color(0xFF2170E4)],
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, primaryDimColor],
         ),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x260058BE),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: 32,
-            offset: Offset(0, 12),
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -234,20 +239,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildDivider() {
     return Row(
       children: [
-        const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'HOẶC ĐĂNG NHẬP BẰNG',
             style: TextStyle(
-              color: Color(0xFF727785),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.20,
             ),
           ),
         ),
-        const Expanded(child: Divider(color: Color(0x4CC2C6D6), thickness: 1)),
+        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 1)),
       ],
     );
   }
@@ -277,9 +282,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FB),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x19C2C6D6), width: 1.27),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.27),
       ),
       child: Material(
         color: Colors.transparent,
@@ -293,8 +298,8 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFF191C1E),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -310,9 +315,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Wrap(
       alignment: WrapAlignment.center,
       children: [
-        const Text(
+        Text(
           'Chưa có tài khoản? ',
-          style: TextStyle(color: Color(0xFF424754), fontSize: 14),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
         ),
         GestureDetector(
           onTap: () {
@@ -321,10 +326,10 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const SignupScreen()),
             );
           },
-          child: const Text(
+          child: Text(
             'Đăng ký ngay',
             style: TextStyle(
-              color: Color(0xFF0058BE),
+              color: Theme.of(context).colorScheme.primary,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),

@@ -7,42 +7,44 @@ class SosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 3),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 48),
+        padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 128),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderCard(),
+            _buildHeaderCard(isDark),
             const SizedBox(height: 24),
-            _buildContactsGrid(),
+            _buildContactsGrid(isDark),
             const SizedBox(height: 24),
-            _buildLocationCard(),
+            _buildLocationCard(isDark),
             const SizedBox(height: 24),
-            _buildFormSection(),
+            _buildFormSection(isDark),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderCard() {
+  Widget _buildHeaderCard(bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: ShapeDecoration(
-        color: const Color(0xFFDC2C4F),
+        color: isDark ? const Color(0xFF991B1B) : const Color(0xFFDC2C4F),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),
         ),
-        shadows: const [
+        shadows: [
           BoxShadow(
-            color: Color(0x26B90538),
+            color: isDark ? const Color(0x33EF4444) : const Color(0x26B90538),
             blurRadius: 32,
-            offset: Offset(0, 12),
+            offset: const Offset(0, 12),
           )
         ],
       ),
@@ -63,11 +65,12 @@ class SosScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'GỬI LỜI CẦU CỨU',
                   style: TextStyle(
-                    color: Color(0xFFFFFBFF),
+                    color: isDark ? const Color(0xFFFEE2E2) : const Color(0xFFFFFBFF),
                     fontSize: 24,
+                    fontFamily: 'Montserrat',
                     fontWeight: FontWeight.w800,
                     height: 1.33,
                     letterSpacing: -0.60,
@@ -77,8 +80,9 @@ class SosScreen extends StatelessWidget {
                 Text(
                   'Chức năng khẩn cấp - Sử dụng khi gặp nguy hiểm',
                   style: TextStyle(
-                    color: const Color(0xFFFFFBFF).withValues(alpha: 0.90),
+                    color: isDark ? const Color(0xFFFEE2E2) : const Color(0xFFFFFBFF).withValues(alpha: 0.90),
                     fontSize: 14,
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w500,
                     height: 1.43,
                   ),
@@ -91,7 +95,7 @@ class SosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactsGrid() {
+  Widget _buildContactsGrid(bool isDark) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = (constraints.maxWidth - 12) / 2;
@@ -99,23 +103,44 @@ class SosScreen extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _buildContactItem('CẢNH SÁT', '113', const Color(0xFFDBEAFE), const Color(0xFF0058BE), width, Icons.local_police),
-            _buildContactItem('CỨU HỎA', '114', const Color(0xFFFEE2E2), const Color(0xFFB90538), width, Icons.local_fire_department),
-            _buildContactItem('CẤP CỨU', '115', const Color(0xFFD1FAE5), const Color(0xFF059669), width, Icons.medical_services),
-            _buildContactItem('SOS', '112', const Color(0xFFFFEDD5), const Color(0xFFEA580C), width, Icons.support),
+            _buildContactItem(
+              'CẢNH SÁT', '113', 
+              isDark ? const Color(0x333B82F6) : const Color(0xFFDBEAFE), 
+              isDark ? const Color(0xFF3B82F6) : const Color(0xFF0058BE), 
+              width, Icons.local_police, isDark,
+            ),
+            _buildContactItem(
+              'CỨU HỎA', '114', 
+              isDark ? const Color(0x33EF4444) : const Color(0xFFFEE2E2), 
+              isDark ? const Color(0xFFEF4444) : const Color(0xFFB90538), 
+              width, Icons.local_fire_department, isDark,
+            ),
+            _buildContactItem(
+              'CẤP CỨU', '115', 
+              isDark ? const Color(0x3310B981) : const Color(0xFFD1FAE5), 
+              isDark ? const Color(0xFF34D399) : const Color(0xFF059669), 
+              width, Icons.medical_services, isDark,
+            ),
+            _buildContactItem(
+              'SOS', '112', 
+              isDark ? const Color(0x33F97316) : const Color(0xFFFFEDD5), 
+              isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C), 
+              width, Icons.support, isDark,
+            ),
           ],
         );
       },
     );
   }
 
-  Widget _buildContactItem(String title, String number, Color bgColor, Color fgColor, double width, IconData icon) {
+  Widget _buildContactItem(String title, String number, Color bgColor, Color fgColor, double width, IconData icon, bool isDark) {
     return Container(
       width: width,
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         shape: RoundedRectangleBorder(
+          side: isDark ? const BorderSide(width: 1, color: Color(0x33475569)) : BorderSide.none,
           borderRadius: BorderRadius.circular(24),
         ),
       ),
@@ -135,32 +160,32 @@ class SosScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: 1),
           ),
           Text(
             number,
-            style: TextStyle(color: fgColor, fontSize: 20, fontWeight: FontWeight.w800, height: 1.40),
+            style: TextStyle(color: fgColor, fontSize: 20, fontFamily: 'Manrope', fontWeight: FontWeight.w800, height: 1.40),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationCard() {
+  Widget _buildLocationCard(bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF020617) : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32),
+          side: isDark ? const BorderSide(width: 1, color: Color(0x19475569)) : BorderSide.none,
+          borderRadius: BorderRadius.circular(isDark ? 40 : 32),
         ),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x0C000000),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          )
+        shadows: isDark ? const [
+          BoxShadow(color: Color(0x19000000), blurRadius: 10, offset: Offset(0, 8), spreadRadius: -6),
+          BoxShadow(color: Color(0x19000000), blurRadius: 25, offset: Offset(0, 20), spreadRadius: -5),
+        ] : const [
+          BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1)),
         ],
       ),
       child: Column(
@@ -169,40 +194,50 @@ class SosScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Vị trí của bạn', style: TextStyle(color: Color(0xFF424754), fontSize: 14, fontWeight: FontWeight.w700)),
+              Text('Vị trí của bạn', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF424754), fontSize: 14, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: ShapeDecoration(
-                  color: const Color(0x190058BE),
+                  color: isDark ? const Color(0x333B82F6) : const Color(0x190058BE),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
                 ),
-                child: const Text('ĐANG CẬP NHẬT', style: TextStyle(color: Color(0xFF0058BE), fontSize: 10, fontWeight: FontWeight.w700)),
+                child: Text('ĐANG CẬP NHẬT', style: TextStyle(color: isDark ? const Color(0xFF3B82F6) : const Color(0xFF0058BE), fontSize: 10, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Container(
             height: 160,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0x4CC2C6D6)),
-              image: const DecorationImage(
-                image: NetworkImage("https://placehold.co/600x400/png?text=Map"),
+            decoration: ShapeDecoration(
+              shape: RoundedRectangleBorder(
+                side: isDark ? const BorderSide(width: 1, color: Color(0x4C475569)) : BorderSide.none,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              image: DecorationImage(
+                image: const NetworkImage("https://placehold.co/600x400/png?text=Map"),
                 fit: BoxFit.cover,
+                colorFilter: isDark ? ColorFilter.mode(Colors.black.withValues(alpha: 0.2), BlendMode.darken) : null,
               ),
             ),
             child: Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(24)),
-                ),
+                if (isDark)
+                  Container(decoration: BoxDecoration(color: const Color(0x660F172A), borderRadius: BorderRadius.circular(24))),
+                
                 Positioned(
                   top: 16,
                   right: 16,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(8)),
-                    child: const Text('16.0544° N, 108.2022° E', style: TextStyle(color: Color(0xFF0058BE), fontSize: 10, fontWeight: FontWeight.w700)),
+                    decoration: ShapeDecoration(
+                      color: isDark ? const Color(0xE5334155) : Colors.white.withValues(alpha: 0.9), 
+                      shape: RoundedRectangleBorder(
+                        side: isDark ? const BorderSide(width: 1, color: Color(0x33475569)) : BorderSide.none,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      shadows: isDark ? const [BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))] : null,
+                    ),
+                    child: const Text('16.0544° N, 108.2022° E', style: TextStyle(color: Color(0xFF3B82F6), fontSize: 10, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
                   ),
                 ),
                 Positioned(
@@ -211,8 +246,15 @@ class SosScreen extends StatelessWidget {
                   right: 16,
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(12)),
-                    child: const Text('Phường 22, Quận Bình Thạnh, TP.HCM', style: TextStyle(color: Color(0xFF1E293B), fontSize: 10, fontWeight: FontWeight.w500)),
+                    decoration: ShapeDecoration(
+                      color: isDark ? const Color(0xE5334155) : Colors.white.withValues(alpha: 0.9), 
+                      shape: RoundedRectangleBorder(
+                        side: isDark ? const BorderSide(width: 1, color: Color(0x33475569)) : BorderSide.none,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      shadows: isDark ? const [BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))] : null,
+                    ),
+                    child: Text('Phường 22, Quận Bình Thạnh, TP.HCM', style: TextStyle(color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B), fontSize: 10, fontFamily: 'Manrope', fontWeight: FontWeight.w500)),
                   ),
                 ),
               ],
@@ -223,33 +265,34 @@ class SosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFormSection() {
+  Widget _buildFormSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTextFieldLabel('SỐ NGƯỜI CẦN CỨU', required: true),
+        _buildTextFieldLabel('SỐ NGƯỜI CẦN CỨU', isDark, required: true),
         const SizedBox(height: 8),
-        _buildTextField('Nhập số lượng người...'),
+        _buildTextField('Nhập số lượng người...', isDark),
         const SizedBox(height: 16),
-        _buildTextFieldLabel('MÔ TẢ TÌNH HUỐNG (KHÔNG BẮT BUỘC)', required: false),
+        _buildTextFieldLabel('MÔ TẢ TÌNH HUỐNG (KHÔNG BẮT BUỘC)', isDark, required: false),
         const SizedBox(height: 8),
-        _buildTextField('Nhập chi tiết về tình trạng khẩn cấp hiện tại của bạn...', maxLines: 4),
+        _buildTextField('Nhập chi tiết về tình trạng khẩn cấp hiện tại của bạn...', isDark, maxLines: 4),
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: ShapeDecoration(
+            color: Colors.transparent,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 2, color: Color(0xFFC2C6D6)),
+              side: BorderSide(width: 2, color: isDark ? const Color(0xFF475569) : const Color(0xFFC2C6D6)),
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.upload_file, color: Color(0xFF64748B)),
-              SizedBox(width: 8),
-              Text('Đính kèm ảnh/video', style: TextStyle(color: Color(0xFF64748B), fontSize: 14, fontWeight: FontWeight.w700)),
+              Icon(Icons.upload_file, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Text('Đính kèm ảnh/video', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 14, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
             ],
           ),
         ),
@@ -258,50 +301,51 @@ class SosScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: ShapeDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFFB90538), Color(0xFFDC2C4F)]),
+            gradient: LinearGradient(colors: isDark ? const [Color(0xFFEF4444), Color(0xFF991B1B)] : const [Color(0xFFB90538), Color(0xFFDC2C4F)]),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            shadows: const [BoxShadow(color: Color(0x3FB90538), blurRadius: 32, offset: Offset(0, 12))],
+            shadows: [BoxShadow(color: isDark ? const Color(0x4CEF4444) : const Color(0x3FB90538), blurRadius: 32, offset: const Offset(0, 12))],
           ),
           child: const Text(
             'GỬI CẦU CỨU NGAY',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+            style: TextStyle(color: Colors.white, fontSize: 18, fontFamily: 'Montserrat', fontWeight: FontWeight.w800),
           ),
         ),
         const SizedBox(height: 16),
         const Center(
           child: Text(
-            'Lưu ý: Bạn phải hoàn toàn chịu trách nhiệm về thông tin cung cấp. Việc báo tin giả có thể bị truy cứu trách nhiệm.',
+            'Lưu ý: Bạn phải hoàn toàn chịu trách nhiệm về thông tin cung cấp. Việc báo tin giả có thể bị truy cứu trách nhiệm hình sự theo quy định pháp luật.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500, height: 1.5),
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontFamily: 'Manrope', fontWeight: FontWeight.w500, height: 1.63),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTextFieldLabel(String text, {bool required = false}) {
+  Widget _buildTextFieldLabel(String text, bool isDark, {bool required = false}) {
     return Text.rich(
       TextSpan(
         children: [
-          TextSpan(text: text, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w700)),
-          if (required) const TextSpan(text: ' *', style: TextStyle(color: Color(0xFFBA1A1A), fontSize: 12, fontWeight: FontWeight.w700)),
+          TextSpan(text: text, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 12, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
+          if (required) TextSpan(text: ' *', style: TextStyle(color: isDark ? const Color(0xFFEF4444) : const Color(0xFFBA1A1A), fontSize: 12, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
 
-  Widget _buildTextField(String hint, {int maxLines = 1}) {
+  Widget _buildTextField(String hint, bool isDark, {int maxLines = 1}) {
     return Container(
       decoration: ShapeDecoration(
-        color: const Color(0xFFF2F4F6),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF2F4F6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       child: TextField(
         maxLines: maxLines,
+        style: TextStyle(color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B), fontSize: 14, fontFamily: 'Manrope'),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+          hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8), fontSize: 14, fontFamily: 'Manrope'),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
         ),
