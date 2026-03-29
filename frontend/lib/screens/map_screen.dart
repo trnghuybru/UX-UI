@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_toggle_bar.dart';
+import 'shelter_registration_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -268,27 +269,36 @@ class _MapScreenState extends State<MapScreen> {
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32),
-                  borderRadius: BorderRadius.circular(9999),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x4C2E7D32),
-                      blurRadius: 32,
-                      offset: Offset(0, 12),
-                    )
-                  ],
-                ),
-                child: const Text(
-                  'Đăng ký địa điểm trú ẩn',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: 'Manrope',
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.40,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ShelterRegistrationScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(9999),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32),
+                    borderRadius: BorderRadius.circular(9999),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4C2E7D32),
+                        blurRadius: 32,
+                        offset: Offset(0, 12),
+                      )
+                    ],
+                  ),
+                  child: const Text(
+                    'Đăng ký địa điểm trú ẩn',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.40,
+                    ),
                   ),
                 ),
               ),
