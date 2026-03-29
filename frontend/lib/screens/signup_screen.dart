@@ -194,7 +194,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: _buildSocialButton(
                   title: 'Facebook',
                   iconUrl:
-                      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/960px-2023_Facebook_icon.svg.png',
+                      'https://cdn-icons-png.flaticon.com/512/733/733547.png',
                 ),
               ),
               const SizedBox(width: 16),
@@ -202,7 +202,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: _buildSocialButton(
                   title: 'Google',
                   iconUrl:
-                      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
+                      'https://cdn-icons-png.flaticon.com/512/300/300221.png',
                 ),
               ),
             ],
