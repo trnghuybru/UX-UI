@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../screens/edit_profile_screen.dart';
@@ -43,17 +44,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0C000000),
+            color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x0C000000),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           )
         ],
       ),
@@ -105,10 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Nguyễn Văn A',
             style: TextStyle(
-              color: Color(0xFF191C1E),
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 24,
               fontFamily: 'Manrope',
               fontWeight: FontWeight.w800,
@@ -117,10 +120,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'nguyenvana@email.com',
             style: TextStyle(
-              color: Color(0xFF54647A),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
               fontFamily: 'Manrope',
             ),
@@ -139,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6E8EA),
+                  color: isDark ? AppTheme.darkSurfaceContainerHighest : const Color(0xFFE6E8EA),
                   borderRadius: BorderRadius.circular(9999),
                 ),
                 child: Row(
@@ -171,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -197,23 +200,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F4F6),
+        color: isDark ? Theme.of(context).scaffoldBackgroundColor : const Color(0xFFF2F4F6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF0058BE), size: 24),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 11,
                   fontFamily: 'Manrope',
                   fontWeight: FontWeight.w700,
@@ -223,8 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Color(0xFF191C1E),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
@@ -242,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -302,25 +307,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required ValueChanged<bool> onChanged,
     bool isWarning = false,
   }) {
+    final warningColor = Theme.of(context).colorScheme.error;
+    final regularColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: isWarning ? const Color(0x0CB90538) : Colors.transparent,
+        color: isWarning ? warningColor.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: isWarning ? Border.all(color: const Color(0x19B90538)) : null,
+        border: isWarning ? Border.all(color: warningColor.withValues(alpha: 0.2)) : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Icon(icon, color: isWarning ? const Color(0xFFB90538) : const Color(0xFF5A5F6B)),
+              Icon(icon, color: isWarning ? warningColor : regularColor),
               const SizedBox(width: 12),
               Text(
                 label,
                 style: TextStyle(
-                  color: isWarning ? const Color(0xFFB90538) : const Color(0xFF191C1E),
+                  color: isWarning ? warningColor : Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontFamily: 'Manrope',
                   fontWeight: isWarning ? FontWeight.w700 : FontWeight.w500,
@@ -331,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF0058BE),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: const Color(0xFFE0E3E5),
@@ -345,7 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       clipBehavior: Clip.antiAlias,

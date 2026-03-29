@@ -8,8 +8,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? Colors.white : const Color(0xFF424754);
-    final titleColor = isDark ? const Color(0xFF66A3FF) : const Color(0xFF0058BE);
+    final iconColor = Theme.of(context).colorScheme.onSurface;
+    final titleColor = Theme.of(context).colorScheme.primary;
 
     return AppBar(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

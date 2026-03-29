@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/map_screen.dart';
@@ -33,21 +34,31 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: SafeArea( // Đảm bảo an toàn không bị lẹm vào phần viền màn hình
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildNavItem(context, icon: Icons.cloud_outlined, label: 'DỰ BÁO', index: 0),
-            _buildNavItem(context, icon: Icons.map_outlined, label: 'BẢN ĐỒ', index: 1),
-            _buildNavItem(context, icon: Icons.article_outlined, label: 'TIN TỨC', index: 2),
-            _buildSosItem(context, index: 3),
-            _buildNavItem(context, icon: Icons.person_outline, label: 'CÁ NHÂN', index: 4),
-          ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark 
+        ? const Color(0xFF141A22).withValues(alpha: 0.8) 
+        : Colors.white.withValues(alpha: 0.9);
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          width: double.infinity,
+          color: bgColor,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: SafeArea( // Đảm bảo an toàn không bị lẹm vào phần viền màn hình
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildNavItem(context, icon: Icons.cloud_outlined, label: 'DỰ BÁO', index: 0),
+                _buildNavItem(context, icon: Icons.map_outlined, label: 'BẢN ĐỒ', index: 1),
+                _buildNavItem(context, icon: Icons.article_outlined, label: 'TIN TỨC', index: 2),
+                _buildSosItem(context, index: 3),
+                _buildNavItem(context, icon: Icons.person_outline, label: 'CÁ NHÂN', index: 4),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -65,7 +76,7 @@ class CustomBottomNavBar extends StatelessWidget {
         width: 65,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
         decoration: ShapeDecoration(
-          color: isActive ? const Color(0xFFDEE9F5) : Colors.transparent,
+          color: isActive ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -77,7 +88,7 @@ class CustomBottomNavBar extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isActive ? const Color(0xFF0058BE) : const Color(0xFF5A5F6B),
+              color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -86,7 +97,7 @@ class CustomBottomNavBar extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: isActive ? const Color(0xFF0058BE) : const Color(0xFF5A5F6B),
+                  color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 11,
                   fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
@@ -116,12 +127,12 @@ class CustomBottomNavBar extends StatelessWidget {
             Container(
               width: 38,
               height: 38,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDC2C4F),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error,
                 shape: BoxShape.circle,
               ),
-              child: const Center(
-                child: Text('SOS', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+              child: Center(
+                child: Text('SOS', style: TextStyle(color: Theme.of(context).colorScheme.onError, fontSize: 13, fontWeight: FontWeight.bold)),
               )
             ),
             const SizedBox(height: 4),
@@ -130,7 +141,7 @@ class CustomBottomNavBar extends StatelessWidget {
               child: Text(
                 'SOS',
                 style: TextStyle(
-                  color: isActive ? const Color(0xFFDC2C4F) : const Color(0xFF5A5F6B),
+                  color: isActive ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 11,
                   fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
