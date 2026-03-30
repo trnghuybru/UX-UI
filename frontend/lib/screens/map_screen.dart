@@ -5,6 +5,8 @@ import '../widgets/custom_toggle_bar.dart';
 import 'shelter_registration_screen.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -14,10 +16,20 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   int _selectedFilterIndex = 0;
-  late MaplibreMapController _mapController;
+  late MapLibreMapController _mapController;
 
-  void _onMapCreated(MaplibreMapController controller) {
+  void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    await Permission.locationWhenInUse.request();
   }
 
   void _onStyleLoadedCallback() {}
@@ -94,15 +106,18 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // MAP
           Positioned.fill(
-            child: MaplibreMap(
+            child: MapLibreMap(
               onMapCreated: _onMapCreated,
               onStyleLoadedCallback: _onStyleLoadedCallback,
               styleString:
-                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+                  "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
               initialCameraPosition: const CameraPosition(
                 target: LatLng(21.03357551700003, 105.81911236900004),
                 zoom: 14.0,
               ),
+              myLocationEnabled: true,
+              trackCameraPosition: true,
+              attributionButtonPosition: null,
             ),
           ),
 
@@ -227,11 +242,11 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // MAP (GOONG)
           Positioned.fill(
-            child: MaplibreMap(
+            child: MapLibreMap(
               onMapCreated: _onMapCreated,
               onStyleLoadedCallback: _onStyleLoadedCallback,
               styleString:
-                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+                  "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
               initialCameraPosition: const CameraPosition(
                 target: LatLng(16.047079, 108.206230), // Đà Nẵng
                 zoom: 6.0, // zoom thấp để nhìn vùng bão
@@ -300,11 +315,11 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // MAP (GOONG)
           Positioned.fill(
-            child: MaplibreMap(
+            child: MapLibreMap(
               onMapCreated: _onMapCreated,
               onStyleLoadedCallback: _onStyleLoadedCallback,
               styleString:
-                  "https://tiles.goong.io/assets/goong_map_web.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+                  "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
               initialCameraPosition: const CameraPosition(
                 target: LatLng(16.047079, 108.206230), // Đà Nẵng
                 zoom: 13.0,
