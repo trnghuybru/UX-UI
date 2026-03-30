@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'screens/login_screen.dart';
 import 'theme.dart';
+import 'widgets/shell_screen.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi', null);
   // Disable Hybrid Composition for better Android emulator stability
   MapLibreMap.useHybridComposition = false;
   runApp(const MyApp());

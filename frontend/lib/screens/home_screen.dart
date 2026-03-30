@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/weather_model.dart';
+import '../services/location_service.dart';
+import '../services/weather_service.dart';
 import '../theme.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+import 'weather_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +16,24 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isAlertExpanded = true;
+  CurrentWeatherModel? _weather;
+  bool _weatherLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWeather();
+  }
+
+  Future<void> _fetchWeather() async {
+    try {
+      final pos = await LocationService.getCurrentLocation();
+      final data = await WeatherService().fetchAll(pos.lat, pos.lon);
+      if (mounted) setState(() { _weather = data.current; _weatherLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _weatherLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -176,9 +198,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildWeatherCard(bool isDark) {
     const primaryDimColor = Color(0xFF004395);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const WeatherScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -208,7 +237,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Icon(Icons.location_on_outlined, color: Colors.white, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Hà Nội',
+                    _weatherLoading
+                        ? '...'                         
+                        : _weather != null
+                            ? _weather!.cityName    
+                            : 'Đà Nẵng',
                     style: TextStyle(
                       color: isDark ? const Color(0xFFD8E2FF) : Colors.white,
                       fontSize: 18,
@@ -224,7 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '28',
+                    _weatherLoading
+                        ? '--'
+                        : '${_weather?.temp.round() ?? '--'}',
                     style: TextStyle(
                       color: isDark ? const Color(0xFFD8E2FF) : Colors.white,
                       fontSize: 96,
@@ -250,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Có mây, trời nắng',
+                _weatherLoading ? 'Đang tải...' : (_weather?.description ?? ''),
                 style: TextStyle(
                   color: isDark ? const Color(0xFFD8E2FF) : Colors.white,
                   fontSize: 20,
@@ -260,7 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Cảm giác như 30°C',
+                _weatherLoading
+                    ? ''
+                    : _weather != null
+                        ? 'Cảm giác như ${_weather!.feelsLike.round()}°C'
+                        : '',
                 style: TextStyle(
                   color: (isDark ? const Color(0xFFD8E2FF) : Colors.white).withValues(alpha: 0.80),
                   fontSize: 14,
@@ -276,17 +315,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _buildWeatherDetailItem(Icons.water_drop_outlined, 'ĐỘ ẨM', '65%', itemWidth, isDark),
-                      _buildWeatherDetailItem(Icons.air_outlined, 'GIÓ', '12km/h', itemWidth, isDark),
-                      _buildWeatherDetailItem(Icons.visibility_outlined, 'TẦM NHÌN', '10km', itemWidth, isDark),
-                      _buildWeatherDetailItem(Icons.speed_outlined, 'ÁP SUẤT', '1013 hPa', itemWidth, isDark),
+                      _buildWeatherDetailItem(Icons.water_drop_outlined, 'ĐỘ ẨM', _weather != null ? '${_weather!.humidity}%' : '--', itemWidth, isDark),
+                      _buildWeatherDetailItem(Icons.air_outlined, 'GIÓ', _weather != null ? '${_weather!.windSpeed.toStringAsFixed(1)} m/s' : '--', itemWidth, isDark),
+                      _buildWeatherDetailItem(Icons.visibility_outlined, 'TẦM NHÌN', _weather != null ? '${(_weather!.visibility / 1000).toStringAsFixed(1)} km' : '--', itemWidth, isDark),
+                      _buildWeatherDetailItem(Icons.speed_outlined, 'ÁP SUẤT', _weather != null ? '${_weather!.pressure} hPa' : '--', itemWidth, isDark),
                     ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -351,13 +391,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            Text(
-              'Xem tất cả',
-              style: TextStyle(
-                color: isDark ? const Color(0xFFADC6FF) : Theme.of(context).colorScheme.primary,
-                fontSize: 14,
-                fontFamily: isDark ? 'Montserrat' : null,
-                fontWeight: FontWeight.w600,
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WeatherScreen()),
+                );
+              },
+              child: Text(
+                'Xem tất cả',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFFADC6FF) : Theme.of(context).colorScheme.primary,
+                  fontSize: 14,
+                  fontFamily: isDark ? 'Montserrat' : null,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

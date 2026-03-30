@@ -29,7 +29,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    await Permission.locationWhenInUse.request();
+    if (!const bool.fromEnvironment('dart.library.html')) {
+      await Permission.locationWhenInUse.request();
+    }
   }
 
   void _onStyleLoadedCallback() {}
