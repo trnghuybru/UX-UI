@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/logo.dart';
 import '../widgets/text_field.dart';
 import 'signup_screen.dart';
-import 'home_screen.dart';
+import '../widgets/shell_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (context) => const ShellScreen()),
             );
           },
           borderRadius: BorderRadius.circular(12),

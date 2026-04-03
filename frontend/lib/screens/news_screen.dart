@@ -12,7 +12,6 @@ class NewsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0C10) : Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 80, left: 16, right: 16, bottom: 48),
         child: Column(

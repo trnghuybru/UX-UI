@@ -48,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
       ),
-      bottomNavigationBar: const CustomBottomNavBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 48),
         child: Column(

@@ -12,7 +12,6 @@ class SosScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 3),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 128),
         child: Column(

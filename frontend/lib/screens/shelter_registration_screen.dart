@@ -35,7 +35,6 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E14) : const Color(0xFFF8F9FA),
       appBar: const CustomAppBar(),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 80, 16, 120),
         child: Column(
