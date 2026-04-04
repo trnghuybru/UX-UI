@@ -3,6 +3,9 @@ import '../widgets/logo.dart';
 import '../widgets/text_field.dart';
 import 'signup_screen.dart';
 import '../widgets/shell_screen.dart';
+import '../services/auth_service.dart';
+import '../services/user_session.dart';
+import '../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +16,68 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ email và mật khẩu')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final AuthResponse? response = await _authService.login(email, password);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response != null) {
+          // Save session
+          UserSession().saveSession(response);
+          
+          // Success: Navigation to ShellScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ShellScreen()),
+          );
+        } else {
+          // Failure: Display error
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi kết nối: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +201,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const CustomTextField(
+          CustomTextField(
             hintText: 'email@vi-du.com',
             icon: Icons.email_outlined,
+            controller: _emailController,
           ),
           const SizedBox(height: 20),
           Row(
@@ -171,6 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
             hintText: '••••••••',
             icon: Icons.lock_outline,
             obscureText: !_isPasswordVisible,
+            controller: _passwordController,
             suffixIcon: _isPasswordVisible
                 ? Icons.visibility_outlined
                 : Icons.visibility_off_outlined,
@@ -214,22 +281,26 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ShellScreen()),
-            );
-          },
+          onTap: _isLoading ? null : _handleLogin,
           borderRadius: BorderRadius.circular(12),
-          child: const Center(
-            child: Text(
-              'Đăng nhập',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Đăng nhập',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
           ),
         ),
       ),

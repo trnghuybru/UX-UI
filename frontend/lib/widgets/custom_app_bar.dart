@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../main.dart'; // import themeNotifier
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onNotificationPressed;
+  final String? title;
 
-  const CustomAppBar({super.key, this.onNotificationPressed});
+  const CustomAppBar({super.key, this.onNotificationPressed, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -15,22 +16,38 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       scrolledUnderElevation: 0,
-      title: Row(
-        children: [
-          Icon(Icons.waves, color: titleColor),
-          const SizedBox(width: 8),
-          Text(
-            'Sóng Cứu Hộ',
+      leading: Navigator.canPop(context) 
+          ? IconButton(
+              icon: Icon(Icons.arrow_back_ios_new, color: iconColor, size: 20),
+              onPressed: () => Navigator.pop(context),
+            )
+          : null,
+      title: title != null 
+        ? Text(
+            title!,
             style: TextStyle(
-              color: titleColor,
-              fontSize: 20,
+              color: isDark ? Colors.white : const Color(0xFF191C1E),
+              fontSize: 18,
               fontFamily: 'Manrope',
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.50,
+              fontWeight: FontWeight.w700,
             ),
+          )
+        : Row(
+            children: [
+              Icon(Icons.waves, color: titleColor),
+              const SizedBox(width: 8),
+              Text(
+                'Sóng Cứu Hộ',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 20,
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.50,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
       actions: [
         ValueListenableBuilder<ThemeMode>(
           valueListenable: themeNotifier,

@@ -3,6 +3,9 @@ import '../theme.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../screens/edit_profile_screen.dart';
+import '../screens/shelter_request_history_screen.dart';
+import '../services/user_session.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -108,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Nguyễn Văn A',
+            UserSession().currentUser?.fullName ?? 'Khách',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 24,
@@ -120,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'nguyenvana@email.com',
+            UserSession().currentUser?.email ?? 'chua_dang_nhap@email.com',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
@@ -190,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoRow(Icons.phone_outlined, 'SỐ ĐIỆN THOẠI', '+84 123 456 789'),
+          _buildInfoRow(Icons.phone_outlined, 'SỐ ĐIỆN THOẠI', UserSession().currentUser?.phone ?? 'Chưa cập nhật'),
           const SizedBox(height: 16),
           _buildInfoRow(Icons.location_on_outlined, 'ĐỊA CHỈ', 'Quận 1, TP. Hồ Chí Minh'),
         ],
@@ -358,16 +361,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          _buildMenuItem(Icons.history, 'Lịch sử cảnh báo', true),
-          _buildMenuItem(Icons.contact_phone_outlined, 'Danh bạ khẩn cấp', true),
-          _buildMenuItem(Icons.settings_outlined, 'Cài đặt nâng cao', true),
-          _buildMenuItem(Icons.privacy_tip_outlined, 'Quyền riêng tư', false),
+          _buildMenuItem(Icons.history, 'Lịch sử cảnh báo', true, () {}),
+          _buildMenuItem(Icons.contact_phone_outlined, 'Danh bạ khẩn cấp', true, () {}),
+          _buildMenuItem(Icons.home_work_outlined, 'Yêu cầu đăng ký trú ẩn', true, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ShelterRequestHistoryScreen()),
+            );
+          }),
+          _buildMenuItem(Icons.settings_outlined, 'Cài đặt nâng cao', true, () {}),
+          _buildMenuItem(Icons.privacy_tip_outlined, 'Quyền riêng tư', false, () {}),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String label, bool showDivider) {
+  Widget _buildMenuItem(IconData icon, String label, bool showDivider, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
         border: showDivider 
@@ -377,7 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -418,7 +427,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildLogoutButton(BuildContext context) {
     return InkWell(
       onTap: () {
-        // Handle logout
+        // Clear session
+        UserSession().clearSession();
+        
+        // Navigate to Login and clear stack
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       },
       borderRadius: BorderRadius.circular(24),
       child: Container(

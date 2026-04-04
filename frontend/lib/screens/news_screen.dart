@@ -13,7 +13,7 @@ class NewsScreen extends StatelessWidget {
       backgroundColor: isDark ? const Color(0xFF0A0C10) : Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 80, left: 16, right: 16, bottom: 48),
+        padding: const EdgeInsets.only(top: 0, left: 16, right: 16, bottom: 48),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../screens/shelter_request_history_screen.dart';
 
 class ShelterRegistrationScreen extends StatefulWidget {
   const ShelterRegistrationScreen({super.key});
@@ -34,37 +35,11 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E14) : const Color(0xFFF8F9FA),
-      appBar: const CustomAppBar(),
+      appBar: const CustomAppBar(title: 'Đăng ký Địa điểm'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 80, 16, 120),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.add_location_alt_rounded, color: accentColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Đăng ký Địa điểm',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 20,
-                    fontFamily: 'Manrope',
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 32),
 
             // Section 1: Basic Information
@@ -302,7 +277,15 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã gửi yêu cầu đăng ký địa điểm trú ẩn!')),
+                  );
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ShelterRequestHistoryScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Colors.white,

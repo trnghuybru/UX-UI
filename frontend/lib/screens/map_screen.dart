@@ -4,6 +4,8 @@ import '../widgets/custom_toggle_bar.dart';
 import 'shelter_registration_screen.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../models/shelter_model.dart';
+import '../services/shelter_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -16,6 +18,9 @@ class _MapScreenState extends State<MapScreen> {
   int _selectedFilterIndex = 0;
   MapLibreMapController? _mapController;
   bool _isStyleLoaded = false;
+  List<ShelterModel> _shelters = [];
+  bool _isLoadingShelters = false;
+  final ShelterService _shelterService = ShelterService();
 
   // Locations
   static const _hn = LatLng(21.03357551700003, 105.81911236900004);
@@ -27,12 +32,55 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onStyleLoadedCallback() {
     setState(() => _isStyleLoaded = true);
+    _addShelterMarkers();
+  }
+
+  Future<void> _fetchShelters() async {
+    setState(() {
+      _isLoadingShelters = true;
+    });
+
+    try {
+      final shelters = await _shelterService.fetchShelters();
+      if (mounted) {
+        setState(() {
+          _shelters = shelters;
+          _isLoadingShelters = false;
+        });
+        _addShelterMarkers();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingShelters = false;
+        });
+      }
+    }
+  }
+
+  void _addShelterMarkers() {
+    if (!_isStyleLoaded || _mapController == null || _shelters.isEmpty) return;
+
+    // Optional: Clear existing symbols if needed, but here we just add them
+    for (final shelter in _shelters) {
+      _mapController!.addSymbol(
+        SymbolOptions(
+          geometry: LatLng(shelter.lat, shelter.lng),
+          iconImage: "marker-15", // Default marker, might need to load custom if desired
+          textField: shelter.name,
+          textOffset: const Offset(0, 2),
+          textColor: '#2E7D32',
+          textSize: 12.0,
+        ),
+      );
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _requestPermissions();
+    _fetchShelters();
   }
 
   Future<void> _requestPermissions() async {
@@ -208,8 +256,17 @@ class _MapScreenState extends State<MapScreen> {
 
   List<Widget> _buildShelterOverlays() {
     return [
-      Positioned(left: 100, top: 80, child: _buildShelterMapBadge('THPT LÊ QUÝ ĐÔN')),
-      Positioned(left: 200, top: 160, child: _buildShelterMapBadge('NHÀ VĂN HÓA')),
+      // Dynamic badges from API could be handled via MapLibre Symbols implemented above.
+      // We can also use Positioned widgets if we want custom Flutter UI on top of map,
+      // but Symbols are generally better for performance and panning.
+      if (_shelters.isNotEmpty) 
+        ..._shelters.take(2).map((s) => Positioned(
+          // This is a simplified positioning for demonstration on top of the stack,
+          // in a real app you'd typically use MapLibre Symbols for this.
+          left: 100.0 + (s.id * 50) % 200, 
+          top: 80.0 + (s.id * 80) % 150,
+          child: _buildShelterMapBadge(s.name)
+        )),
       Positioned(
         bottom: 24,
         left: 0,
@@ -565,12 +622,24 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildShelterList() {
+    if (_isLoadingShelters) {
+      return const Center(child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator()));
+    }
+
+    if (_shelters.isEmpty) {
+      return const Center(child: Padding(padding: EdgeInsets.all(32.0), child: Text('Không tìm thấy điểm trú ẩn nào')));
+    }
+
     return Column(
       spacing: 12,
-      children: [
-        _buildShelterListItem('Trường THPT Lê Quý Đôn', '2 Vũ Văn Dũng, Đà Nẵng', 150, 200, 0.8),
-        _buildShelterListItem('Nhà văn hóa khu vực 3', 'Hải Châu, Đà Nẵng', 45, 50, 2.1),
-      ],
+      children: _shelters.map((shelter) => _buildShelterListItem(
+        shelter.name, 
+        shelter.address, 
+        shelter.currentPeople, 
+        shelter.capacity, 
+        // We'll use a placeholder for distance or calculate it if user location is available
+        2.5 
+      )).toList(),
     );
   }
 
