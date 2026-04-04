@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:location/location.dart' as loc;
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_toggle_bar.dart';
 import 'shelter_registration_screen.dart';
@@ -6,6 +8,9 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/shelter_model.dart';
 import '../services/shelter_service.dart';
+import '../services/location_service.dart';
+import '../services/directions_service.dart';
+import 'navigation_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -21,10 +26,17 @@ class _MapScreenState extends State<MapScreen> {
   List<ShelterModel> _shelters = [];
   bool _isLoadingShelters = false;
   final ShelterService _shelterService = ShelterService();
+  Line? _currentRoute;
+  LatLng? _userLocation;
+  Fill? _radiusFill;
+  Line? _radiusOutline;
+  Circle? _userMarkerCircle;
+  StreamSubscription<loc.LocationData>? _locationSubscription;
+  bool _hasFetchedInitialShelters = false;
 
   // Locations
   static const _hn = LatLng(21.03357551700003, 105.81911236900004);
-  static const _dn = LatLng(16.047079, 108.206230);
+  static const _dn = LatLng(15.978765, 108.236751);
 
   void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
@@ -36,18 +48,42 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _fetchShelters() async {
-    setState(() {
+    if (_isLoadingShelters) return; // Concurrency protection
+    
+    if (mounted) setState(() {
       _isLoadingShelters = true;
     });
 
     try {
-      final shelters = await _shelterService.fetchShelters();
+      // 1. Get current user location
+      final userPos = await LocationService.getCurrentLocation();
+      final userLatLng = LatLng(userPos.lat, userPos.lon);
+
+      // 2. Fetch all shelters
+      final allShelters = await _shelterService.fetchShelters();
+
       if (mounted) {
         setState(() {
-          _shelters = shelters;
+          _userLocation = userLatLng;
           _isLoadingShelters = false;
+          // 3. Filter shelters within 15km
+          _shelters = allShelters.where((s) {
+            double dist = LocationService.calculateDistance(
+              userLatLng.latitude, userLatLng.longitude, 
+              s.lat, s.lng
+            );
+            return dist <= 15.0;
+          }).toList();
         });
+        
+        debugPrint('--- Vị trí hiện tại: ${userLatLng.latitude}, ${userLatLng.longitude}');
         _addShelterMarkers();
+        _updateRadiusVisuals(userLatLng);
+        
+        // Auto center on user when tab 2 is active
+        if (_selectedFilterIndex == 2) {
+          _updateCamera(2);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -61,16 +97,40 @@ class _MapScreenState extends State<MapScreen> {
   void _addShelterMarkers() {
     if (!_isStyleLoaded || _mapController == null || _shelters.isEmpty) return;
 
-    // Optional: Clear existing symbols if needed, but here we just add them
+    _mapController!.clearSymbols();
+    _mapController!.clearCircles(); // Clear any existing shelter dots
+    
+    // Re-draw the user circle (since we cleared all circles)
+    if (_userLocation != null) _updateUserMarker(_userLocation!);
+
     for (final shelter in _shelters) {
+      final pos = LatLng(shelter.lat, shelter.lng);
+      
+      // 1. Add a small pinpoint circle for 100% accuracy
+      _mapController!.addCircle(
+        CircleOptions(
+          geometry: pos,
+          circleColor: '#166534', // Same green as brand
+          circleRadius: 4.0,
+          circleStrokeWidth: 1.5,
+          circleStrokeColor: '#FFFFFF',
+        )
+      );
+
+      // 2. Add the descriptive symbol
       _mapController!.addSymbol(
         SymbolOptions(
-          geometry: LatLng(shelter.lat, shelter.lng),
-          iconImage: "marker-15", // Default marker, might need to load custom if desired
+          geometry: pos,
+          iconImage: "marker-15",
+          iconAnchor: "bottom", // Ensuring the tip of the pin is at the location
+          iconSize: 1.2,
           textField: shelter.name,
-          textOffset: const Offset(0, 2),
-          textColor: '#2E7D32',
-          textSize: 12.0,
+          textOffset: const Offset(0, 1), // Offset text to not cover pin tip
+          textColor: '#1B5E20',
+          textSize: 11.5,
+          textHaloBlur: 1.0,
+          textHaloColor: '#FFFFFF',
+          textHaloWidth: 0.8,
         ),
       );
     }
@@ -79,14 +139,73 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _requestPermissions();
+    _initLocationTracking();
     _fetchShelters();
   }
 
-  Future<void> _requestPermissions() async {
-    if (!const bool.fromEnvironment('dart.library.html')) {
-      await Permission.locationWhenInUse.request();
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initLocationTracking() async {
+    // 1. Force ask for permission dialog every time if not granted yet
+    bool hasP = await LocationService.requestPermissions();
+    if (!hasP) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng cấp quyền vị trí để xem điểm trú ẩn quanh bạn.'))
+        );
+      }
+      return;
     }
+
+    final location = loc.Location();
+    
+    // Check/request permission & service (logic moved to LocationService)
+    await location.changeSettings(accuracy: loc.LocationAccuracy.high);
+    
+    void onUpdate(loc.LocationData data) {
+      if (data.latitude == null || data.longitude == null) return;
+      final newLatLng = LatLng(data.latitude!, data.longitude!);
+      
+      if (mounted) {
+        setState(() {
+          _userLocation = newLatLng;
+          // Only fetch FROM API once on first location, or manually
+          if (!_hasFetchedInitialShelters) {
+            _hasFetchedInitialShelters = true;
+            _fetchShelters();
+          }
+        });
+
+        // If currently in Shelter tab, keep visuals centered
+        if (_selectedFilterIndex == 2) {
+          _updateUserMarker(newLatLng);
+          _updateRadiusVisuals(newLatLng);
+          if (_mapController != null) {
+            _mapController!.animateCamera(CameraUpdate.newCameraPosition(
+              CameraPosition(target: newLatLng, zoom: 10.0), // Zoom out more to see the edge
+            ));
+          }
+        }
+      }
+    }
+
+    // 2. Start listening
+    _locationSubscription = location.onLocationChanged.listen(onUpdate);
+
+    // 3. Get initial fixed location immediately (Crucial for emulators)
+    try {
+      final initialData = await location.getLocation();
+      onUpdate(initialData);
+    } catch (_) {}
+  }
+
+  Future<void> _requestPermissions() async {
+    // Permission handling logic handled in LocationService.getCurrentLocation()
+    // and used by _initLocationTracking via loc.Location()
   }
 
   void _updateCamera(int index) {
@@ -102,13 +221,99 @@ class _MapScreenState extends State<MapScreen> {
       target = _dn;
       zoom = 6.0;
     } else {
-      target = _dn;
-      zoom = 13.0;
+      // For Shelter tab (index 2)
+      if (_userLocation != null) {
+        target = _userLocation!;
+        zoom = 10.0; // Zoom out to see the 15km circle
+      } else {
+        return;
+      }
     }
     
     _mapController!.animateCamera(CameraUpdate.newCameraPosition(
       CameraPosition(target: target, zoom: zoom),
     ));
+  }
+
+  void _clearRoute() {
+    if (_currentRoute != null) {
+      _mapController?.removeLine(_currentRoute!);
+      _currentRoute = null;
+    }
+  }
+
+  void _clearRadiusVisuals() {
+    if (_radiusFill != null) {
+      _mapController?.removeFill(_radiusFill!);
+      _radiusFill = null;
+    }
+    if (_radiusOutline != null) {
+      _mapController?.removeLine(_radiusOutline!);
+      _radiusOutline = null;
+    }
+  }
+
+
+
+  void _clearUserMarker() {
+    if (_userMarkerCircle != null) {
+      _mapController?.removeCircle(_userMarkerCircle!);
+      _userMarkerCircle = null;
+    }
+  }
+
+  Future<void> _updateUserMarker(LatLng center) async {
+    _clearUserMarker();
+    
+    // Only show if we are on the Shelter tab (index 2)
+    if (_selectedFilterIndex != 2) return;
+
+    final circle = await _mapController?.addCircle(CircleOptions(
+      geometry: center,
+      circleColor: "#0058BE",
+      circleRadius: 8.0,
+      circleStrokeWidth: 3.0,
+      circleStrokeColor: "#FFFFFF",
+      circleOpacity: 1.0,
+    ));
+
+    setState(() {
+      _userMarkerCircle = circle;
+    });
+  }
+
+  Future<void> _updateRadiusVisuals(LatLng center) async {
+    _clearRadiusVisuals();
+    _updateUserMarker(center);
+    
+    // Only show if we are on the Shelter tab (index 2)
+    if (_selectedFilterIndex != 2) return;
+
+    final circlePoints = LocationService.generateCirclePoints(center.latitude, center.longitude, 15.0);
+    
+    // Draw Fill
+    final fill = await _mapController?.addFill(FillOptions(
+      geometry: circlePoints,
+      fillColor: "#0058BE",
+      fillOpacity: 0.08, // Reduced opacity for clarity
+    ));
+
+    // Draw Outline
+    final outline = await _mapController?.addLine(LineOptions(
+      geometry: circlePoints[0],
+      lineColor: "#003D82", // Darker blue for contrast
+      lineWidth: 3.5, // Thicker outline
+      lineOpacity: 0.8, // More visible outline
+    ));
+
+    setState(() {
+      _radiusFill = fill;
+      _radiusOutline = outline;
+    });
+  }
+
+  Future<void> _drawRoute(ShelterModel shelter) async {
+    // This local drawing method is being replaced by NavigationScreen
   }
 
   @override
@@ -117,35 +322,48 @@ class _MapScreenState extends State<MapScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const CustomAppBar(),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 135),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildMapSection(),
-                    const SizedBox(height: 16),
-                    CustomToggleBar(
-                      labels: const ['Cảnh báo', 'Gió bão', 'Trú ẩn'],
-                      selectedIndex: _selectedFilterIndex,
-                      onSelectedIndexChanged: (index) {
-                        setState(() {
-                          _selectedFilterIndex = index;
-                        });
-                        _updateCamera(index);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDynamicContent(),
-                  ],
+        child: RefreshIndicator(
+          onRefresh: _fetchShelters,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 135),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMapSection(),
+                      const SizedBox(height: 16),
+                      CustomToggleBar(
+                        labels: const ['Cảnh báo', 'Gió bão', 'Trú ẩn'],
+                        selectedIndex: _selectedFilterIndex,
+                        onSelectedIndexChanged: (index) {
+                          setState(() {
+                            _selectedFilterIndex = index;
+                          });
+                          _updateCamera(index);
+                          _clearRoute();
+                          
+                          if (index == 2 && _userLocation != null) {
+                            _updateRadiusVisuals(_userLocation!);
+                            _updateUserMarker(_userLocation!);
+                          } else {
+                            _clearRadiusVisuals();
+                            _clearUserMarker();
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDynamicContent(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -181,7 +399,7 @@ class _MapScreenState extends State<MapScreen> {
               onStyleLoadedCallback: _onStyleLoadedCallback,
               styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
               initialCameraPosition: const CameraPosition(target: _hn, zoom: 14.0),
-              myLocationEnabled: _selectedFilterIndex == 0,
+              myLocationEnabled: true,
               trackCameraPosition: true,
               attributionButtonPosition: null,
             ),
@@ -482,7 +700,7 @@ class _MapScreenState extends State<MapScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(32), border: Border.all(color: const Color(0x19C2C6D6)), boxShadow: const [BoxShadow(color: Color(0x0C000000), blurRadius: 2, offset: Offset(0, 1))]),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(32), border: Border.all(color: const Color(0x19C2C6D6)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -608,14 +826,24 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildShelterStatusHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Điểm trú ẩn', style: TextStyle(color: Color(0xFF191C1E), fontSize: 24, fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: -0.60)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(9999)),
-          child: const Text('24 điểm sẵn sàng', style: TextStyle(color: Color(0xFF166534), fontSize: 12, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Điểm trú ẩn', style: TextStyle(color: Color(0xFF191C1E), fontSize: 24, fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: -0.60)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(9999)),
+              child: const Text('24 điểm sẵn sàng', style: TextStyle(color: Color(0xFF166534), fontSize: 12, fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Chỉ hiển thị các địa điểm trú ẩn trong bán kính 15km quanh bạn',
+          style: TextStyle(color: Color(0xFF424754), fontSize: 13, fontFamily: 'Manrope', fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -631,15 +859,204 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     return Column(
-      spacing: 12,
-      children: _shelters.map((shelter) => _buildShelterListItem(
-        shelter.name, 
-        shelter.address, 
-        shelter.currentPeople, 
-        shelter.capacity, 
-        // We'll use a placeholder for distance or calculate it if user location is available
-        2.5 
-      )).toList(),
+      children: _shelters.map((shelter) {
+        double distance = 0.0;
+        if (_userLocation != null) {
+          distance = LocationService.calculateDistance(
+            _userLocation!.latitude, _userLocation!.longitude,
+            shelter.lat, shelter.lng
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () => _showShelterDetail(shelter),
+            borderRadius: BorderRadius.circular(24),
+            child: _buildShelterListItem(
+              shelter.name, 
+              shelter.address, 
+              shelter.currentPeople, 
+              shelter.capacity, 
+              double.parse(distance.toStringAsFixed(1))
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showShelterDetail(ShelterModel shelter) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: ListView(
+            controller: controller,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.home_work_outlined, color: Color(0xFF166534), size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shelter.name,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF191C1E)),
+                        ),
+                        Text(
+                          shelter.address,
+                          style: const TextStyle(fontSize: 14, color: Color(0xFF727785)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              const Text('CÔNG SUẤT HIỆN TẠI', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: Color(0xFF0058BE))),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${shelter.currentPeople}/${shelter.capacity} người',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF191C1E)),
+                  ),
+                  Text(
+                    '${(shelter.currentPeople / shelter.capacity * 100).toInt()}%',
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.w800, 
+                      color: (shelter.currentPeople / shelter.capacity) > 0.9 ? Colors.red : const Color(0xFF166534)
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: shelter.currentPeople / shelter.capacity,
+                  minHeight: 12,
+                  backgroundColor: const Color(0xFFF2F4F6),
+                  color: (shelter.currentPeople / shelter.capacity) > 0.9 ? Colors.red : const Color(0xFF166534),
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text('TIỆN NGHI', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: Color(0xFF0058BE))),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                   if (shelter.hasCleanWater) _buildAmenityBadge(Icons.water_drop, 'Nước sạch'),
+                   if (shelter.hasFood) _buildAmenityBadge(Icons.restaurant, 'Thực phẩm'),
+                   if (shelter.hasFirstAid) _buildAmenityBadge(Icons.medical_services, 'Sơ cứu'),
+                   if (shelter.hasPower) _buildAmenityBadge(Icons.power, 'Điện'),
+                   if (shelter.hasWifi) _buildAmenityBadge(Icons.wifi, 'Wifi'),
+                   if (!shelter.hasCleanWater && !shelter.hasFood && !shelter.hasFirstAid && !shelter.hasPower && !shelter.hasWifi)
+                     const Text('Không có thông tin tiện nghi', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
+                ],
+              ),
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NavigationScreen(shelter: shelter),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.directions, size: 20),
+                        label: const Text('Chỉ đường', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0058BE),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: SizedBox(
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text('Đóng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF424754))),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmenityBadge(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F4F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF0058BE)),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF191C1E))),
+        ],
+      ),
     );
   }
 

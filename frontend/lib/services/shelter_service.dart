@@ -53,4 +53,54 @@ class ShelterService {
       return [];
     }
   }
+
+  Future<bool> updateShelter(ShelterModel shelter) async {
+    try {
+      final String? token = UserSession().accessToken;
+      if (token == null) return false;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/shelters/${shelter.id}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(shelter.toJson()),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Update Shelter Error: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> registerShelter(Map<String, dynamic> shelterData) async {
+    try {
+      final String? token = UserSession().accessToken;
+      if (token == null) return {'success': false, 'message': 'Phiên làm việc hết hạn'};
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/shelters'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(shelterData),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {'success': true, 'message': 'Thành công'};
+      } else {
+        String errorMsg = 'Lỗi server (${response.statusCode})';
+        try {
+          final data = jsonDecode(response.body);
+          if (data['message'] != null) errorMsg = data['message'];
+        } catch (_) {}
+        return {'success': false, 'message': errorMsg};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Kết nối thất bại: $e'};
+    }
+  }
 }

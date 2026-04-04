@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/shelter_request_history_screen.dart';
+import '../services/shelter_service.dart';
+import '../services/geocoding_service.dart';
 
 class ShelterRegistrationScreen extends StatefulWidget {
   const ShelterRegistrationScreen({super.key});
@@ -23,6 +25,90 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
   bool _hasMedical = false;
   bool _hasElectricity = false;
   bool _hasWifi = false;
+
+  bool _isLoading = false;
+  final ShelterService _shelterService = ShelterService();
+
+  Future<void> _handleSubmit() async {
+    final name = _nameController.text.trim();
+    final address = _addressController.text.trim();
+    final capacity = int.tryParse(_capacityController.text) ?? 50;
+    final current = int.tryParse(_currentController.text) ?? 0;
+
+    if (name.isEmpty || address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ tên và địa chỉ!')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Geocode the address
+      final coords = await GeocodingService.getCoordinates(address);
+      
+      if (coords == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể xác định vị trí từ địa chỉ này. Vui lòng nhập địa chỉ chính xác hơn!')),
+          );
+        }
+        return;
+      }
+
+      final double lat = coords['lat']!;
+      final double lng = coords['lng']!;
+
+      // 2. Prepare data
+      final shelterData = {
+        'name': name,
+        'address': address,
+        'lat': lat,
+        'lng': lng,
+        'capacity': capacity,
+        'current_people': current,
+        'has_clean_water': _hasWater,
+        'has_food': _hasFood,
+        'has_first_aid': _hasMedical,
+        'has_power': _hasElectricity,
+        'has_wifi': _hasWifi,
+      };
+
+      // 3. Call API
+      final result = await _shelterService.registerShelter(shelterData);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (result['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã gửi yêu cầu đăng ký địa điểm trú ẩn!')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ShelterRequestHistoryScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đăng ký thất bại: ${result['message']}'),
+              backgroundColor: Colors.red.shade800,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi hệ thống: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,20 +166,22 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
                    const SizedBox(height: 16),
                    _buildCapacityCard(
                      label: 'SỨC CHỨA TỐI ĐA',
-                     value: _capacityController.text,
+                     controller: _capacityController,
                      unit: 'Người',
                      isDark: isDark,
                      accentColor: accentColor,
                      cardColor: inputBgColor,
+                     textColor: textColor,
                    ),
                    const SizedBox(height: 12),
                    _buildCapacityCard(
                      label: 'SỐ NGƯỜI HIỆN CÓ',
-                     value: _currentController.text,
+                     controller: _currentController,
                      unit: 'Người',
                      isDark: isDark,
                      accentColor: isDark ? textColor : Colors.black87,
                      cardColor: inputBgColor,
+                     textColor: textColor,
                    ),
                 ],
               ),
@@ -266,6 +354,7 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
                     subTextColor: subTextColor,
                     textColor: textColor,
                     noShadow: true,
+                    keyboardType: TextInputType.phone,
                   ),
                 ],
               ),
@@ -277,25 +366,24 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã gửi yêu cầu đăng ký địa điểm trú ẩn!')),
-                  );
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ShelterRequestHistoryScreen()),
-                  );
-                },
+                onPressed: _isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
+                  disabledBackgroundColor: accentColor.withOpacity(0.6),
                 ),
-                child: const Text(
-                  'Hoàn tất Đăng ký',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Hoàn tất Đăng ký',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
           ],
@@ -333,6 +421,7 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
     required Color textColor,
     IconData? suffixIcon,
     bool noShadow = false,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,6 +447,7 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
           ),
           child: TextField(
             controller: controller,
+            keyboardType: keyboardType,
             style: TextStyle(color: textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
@@ -374,11 +464,12 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
 
   Widget _buildCapacityCard({
     required String label,
-    required String value,
+    required TextEditingController controller,
     required String unit,
     required bool isDark,
     required Color accentColor,
     required Color cardColor,
+    required Color textColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -404,16 +495,23 @@ class _ShelterRegistrationScreenState extends State<ShelterRegistrationScreen> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  color: accentColor,
-                  fontSize: 24,
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 24,
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w700,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                  ),
                 ),
               ),
-              const Spacer(),
               Text(
                 unit,
                 style: TextStyle(

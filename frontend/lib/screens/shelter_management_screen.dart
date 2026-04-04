@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/shelter_request.dart';
+import '../models/shelter_model.dart';
+import '../services/shelter_service.dart';
 import '../widgets/custom_app_bar.dart';
 
 class ShelterManagementScreen extends StatefulWidget {
-  final ShelterRequest request;
-  const ShelterManagementScreen({super.key, required this.request});
+  final ShelterModel shelter;
+  const ShelterManagementScreen({super.key, required this.shelter});
 
   @override
   State<ShelterManagementScreen> createState() => _ShelterManagementScreenState();
@@ -15,22 +16,25 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
   late TextEditingController _controller;
   bool _hasWater = false;
   bool _hasFood = false;
-  bool _hasMedical = false;
-  bool _hasElectricity = false;
+  bool _hasFirstAid = false;
+  bool _hasPower = false;
   bool _hasWifi = false;
+  bool _isSaving = false;
+
+  final ShelterService _shelterService = ShelterService();
 
   @override
   void initState() {
     super.initState();
-    _currentOccupants = widget.request.currentOccupants;
+    _currentOccupants = widget.shelter.currentPeople;
     _controller = TextEditingController(text: _currentOccupants.toString());
     
-    // Initialize amenities based on existing list
-    _hasWater = widget.request.amenities.contains('Nước sạch');
-    _hasFood = widget.request.amenities.contains('Thực phẩm');
-    _hasMedical = widget.request.amenities.contains('Y tế');
-    _hasElectricity = widget.request.amenities.contains('Điện');
-    _hasWifi = widget.request.amenities.contains('Wifi');
+    // Initialize amenities based on shelter model
+    _hasWater = widget.shelter.hasCleanWater;
+    _hasFood = widget.shelter.hasFood;
+    _hasFirstAid = widget.shelter.hasFirstAid;
+    _hasPower = widget.shelter.hasPower;
+    _hasWifi = widget.shelter.hasWifi;
   }
 
   @override
@@ -41,9 +45,51 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
 
   void _updateOccupants(int delta) {
     setState(() {
-      _currentOccupants = (_currentOccupants + delta).clamp(0, widget.request.capacity);
+      _currentOccupants = (_currentOccupants + delta).clamp(0, widget.shelter.capacity);
       _controller.text = _currentOccupants.toString();
     });
+  }
+
+  Future<void> _handleSave() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    final updatedShelter = ShelterModel(
+      id: widget.shelter.id,
+      name: widget.shelter.name,
+      address: widget.shelter.address,
+      capacity: widget.shelter.capacity,
+      currentPeople: _currentOccupants,
+      lat: widget.shelter.lat,
+      lng: widget.shelter.lng,
+      status: widget.shelter.status,
+      createdAt: widget.shelter.createdAt,
+      hasCleanWater: _hasWater,
+      hasFood: _hasFood,
+      hasFirstAid: _hasFirstAid,
+      hasPower: _hasPower,
+      hasWifi: _hasWifi,
+    );
+
+    final success = await _shelterService.updateShelter(updatedShelter);
+
+    if (mounted) {
+      setState(() {
+        _isSaving = false;
+      });
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật thành công!')),
+        );
+        Navigator.pop(context, true); // Return true to indicate data changed
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật thất bại. Vui lòng thử lại.')),
+        );
+      }
+    }
   }
 
   @override
@@ -53,7 +99,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
-      appBar: CustomAppBar(title: 'Quản lý: ${widget.request.name}'),
+      appBar: CustomAppBar(title: 'Quản lý: ${widget.shelter.name}'),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -81,7 +127,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
 
 
   Widget _buildStatusCard(bool isDark, Color accentColor) {
-    double progress = _currentOccupants / widget.request.capacity;
+    double progress = _currentOccupants / widget.shelter.capacity;
     Color progressColor = progress >= 0.9 ? Colors.red : (progress >= 0.7 ? Colors.orange : accentColor);
 
     return Container(
@@ -90,7 +136,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1D2024) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: !isDark ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : null,
+        boxShadow: !isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)] : null,
       ),
       child: Column(
         children: [
@@ -138,7 +184,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
                 ),
               ),
               Text(
-                ' / ${widget.request.capacity}',
+                ' / ${widget.shelter.capacity}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -199,7 +245,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
                     final int? n = int.tryParse(val);
                     if (n != null) {
                       setState(() {
-                        _currentOccupants = n.clamp(0, widget.request.capacity);
+                        _currentOccupants = n.clamp(0, widget.shelter.capacity).toInt();
                       });
                     }
                   },
@@ -223,7 +269,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
               _buildQuickAdjustButton('+10', () => _updateOccupants(10), isDark),
               const SizedBox(width: 12),
               _buildQuickAdjustButton('Hết chỗ', () => setState(() {
-                _currentOccupants = widget.request.capacity;
+                _currentOccupants = widget.shelter.capacity;
                 _controller.text = _currentOccupants.toString();
               }), isDark, isWarning: true),
             ],
@@ -282,13 +328,13 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1D2024).withOpacity(0.5) : const Color(0xFFF2F4F6),
+        color: isDark ? const Color(0xFF1D2024).withValues(alpha: 0.5) : const Color(0xFFF2F4F6),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(Icons.location_on_outlined, 'Địa chỉ', widget.request.address, isDark),
+          _buildInfoRow(Icons.location_on_outlined, 'Địa chỉ', widget.shelter.address, isDark),
         ],
       ),
     );
@@ -373,16 +419,16 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
           _buildAmenitySwitch(
             label: 'Y tế cơ cứu',
             icon: Icons.medical_services_rounded,
-            value: _hasMedical,
-            onChanged: (v) => setState(() => _hasMedical = v),
+            value: _hasFirstAid,
+            onChanged: (v) => setState(() => _hasFirstAid = v),
             accentColor: accentColor,
             textColor: textColor,
           ),
           _buildAmenitySwitch(
             label: 'Nguồn điện',
             icon: Icons.electrical_services_rounded,
-            value: _hasElectricity,
-            onChanged: (v) => setState(() => _hasElectricity = v),
+            value: _hasPower,
+            onChanged: (v) => setState(() => _hasPower = v),
             accentColor: accentColor,
             textColor: textColor,
           ),
@@ -414,7 +460,7 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
+              color: accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: accentColor, size: 18),
@@ -441,23 +487,19 @@ class _ShelterManagementScreenState extends State<ShelterManagementScreen> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: () {
-          // In a real app, this would call an API
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cập nhật thành công!')),
-          );
-          Navigator.pop(context);
-        },
+        onPressed: _isSaving ? null : _handleSave,
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
         ),
-        child: const Text(
-          'Lưu thay đổi',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        child: _isSaving 
+            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text(
+                'Lưu thay đổi',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

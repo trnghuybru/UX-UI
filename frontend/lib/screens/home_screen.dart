@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? '...'                         
                         : _weather != null
                             ? _weather!.cityName    
-                            : 'Đà Nẵng',
+                            : 'Vị trí hiện tại',
                     style: TextStyle(
                       color: isDark ? const Color(0xFFD8E2FF) : Colors.white,
                       fontSize: 18,

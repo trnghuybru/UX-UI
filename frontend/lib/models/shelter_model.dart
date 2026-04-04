@@ -9,6 +9,12 @@ class ShelterModel {
   final String status;
   final DateTime createdAt;
 
+  final bool hasCleanWater;
+  final bool hasFirstAid;
+  final bool hasFood;
+  final bool hasPower;
+  final bool hasWifi;
+
   ShelterModel({
     required this.id,
     required this.name,
@@ -19,6 +25,11 @@ class ShelterModel {
     required this.lng,
     required this.status,
     required this.createdAt,
+    this.hasCleanWater = false,
+    this.hasFirstAid = false,
+    this.hasFood = false,
+    this.hasPower = false,
+    this.hasWifi = false,
   });
 
   factory ShelterModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +43,11 @@ class ShelterModel {
       lng: (json['lng'] as num).toDouble(),
       status: json['status'],
       createdAt: DateTime.parse(json['created_at']),
+      hasCleanWater: json['has_clean_water'] ?? false,
+      hasFirstAid: json['has_first_aid'] ?? false,
+      hasFood: json['has_food'] ?? false,
+      hasPower: json['has_power'] ?? false,
+      hasWifi: json['has_wifi'] ?? false,
     );
   }
 
@@ -46,6 +62,11 @@ class ShelterModel {
       'lng': lng,
       'status': status,
       'created_at': createdAt.toIso8601String(),
+      'has_clean_water': hasCleanWater,
+      'has_first_aid': hasFirstAid,
+      'has_food': hasFood,
+      'has_power': hasPower,
+      'has_wifi': hasWifi,
     };
   }
 }

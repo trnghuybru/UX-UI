@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/shelter_request.dart';
 import '../widgets/custom_app_bar.dart';
 import 'shelter_management_screen.dart';
 import '../models/shelter_model.dart';
@@ -57,17 +56,27 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E14) : const Color(0xFFF8F9FA),
       appBar: const CustomAppBar(title: 'Yêu cầu đăng ký trú ẩn'),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _myShelters.isEmpty
-              ? _buildEmptyState(isDark)
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  itemCount: _myShelters.length,
-                  itemBuilder: (context, index) {
-                    return _buildRequestCard(_myShelters[index], isDark);
-                  },
-                ),
+      body: RefreshIndicator(
+        onRefresh: _fetchMyHistory,
+        child: _isLoading && _myShelters.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : _myShelters.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: _buildEmptyState(isDark),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    itemCount: _myShelters.length,
+                    itemBuilder: (context, index) {
+                      return _buildRequestCard(_myShelters[index], isDark);
+                    },
+                  ),
+      ),
     );
   }
 
@@ -266,24 +275,16 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
   }
 
   void _navigateToManagement(ShelterModel shelter) {
-    // Mapping ShelterModel back to ShelterRequest loosely for the screen
-    final request = ShelterRequest(
-      id: shelter.id.toString(),
-      name: shelter.name,
-      address: shelter.address,
-      capacity: shelter.capacity,
-      currentOccupants: shelter.currentPeople,
-      status: ShelterRequestStatus.approved,
-      timestamp: shelter.createdAt,
-      amenities: [],
-    );
-
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ShelterManagementScreen(request: request),
+        builder: (context) => ShelterManagementScreen(shelter: shelter),
       ),
-    );
+    ).then((updated) {
+      if (updated == true) {
+        _fetchMyHistory();
+      }
+    });
   }
 
   Widget _buildInfoColumn(String label, String value, bool isDark, {Color? valueColor}) {
