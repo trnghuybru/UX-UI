@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/shelter_request.dart';
 import '../widgets/custom_app_bar.dart';
 import 'shelter_management_screen.dart';
+import '../models/shelter_model.dart';
+import '../services/shelter_service.dart';
+import '../services/user_session.dart';
+import 'package:intl/intl.dart';
 
 class ShelterRequestHistoryScreen extends StatefulWidget {
   const ShelterRequestHistoryScreen({super.key});
@@ -11,38 +15,40 @@ class ShelterRequestHistoryScreen extends StatefulWidget {
 }
 
 class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScreen> {
-  final List<ShelterRequest> _mockRequests = [
-    ShelterRequest(
-      id: '1',
-      name: 'Nhà văn hóa Hòa Hải',
-      address: 'Số 123 đường Trường Sa, Hòa Hải, Ngũ Hành Sơn, Đà Nẵng',
-      capacity: 100,
-      currentOccupants: 45,
-      status: ShelterRequestStatus.approved,
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      amenities: ['Nước sạch', 'Thực phẩm', 'Y tế'],
-    ),
-    ShelterRequest(
-      id: '2',
-      name: 'Trường Tiểu học Lê Quý Đôn',
-      address: 'Số 45 đường Nam Kỳ Khởi Nghĩa, Hòa Quý, Ngũ Hành Sơn, Đà Nẵng',
-      capacity: 200,
-      currentOccupants: 0,
-      status: ShelterRequestStatus.pending,
-      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      amenities: ['Nước sạch', 'Wifi'],
-    ),
-    ShelterRequest(
-      id: '3',
-      name: 'Chùa Quan Thế Âm',
-      address: 'Sư Vạn Hạnh, Hòa Hải, Ngũ Hành Sơn, Đà Nẵng',
-      capacity: 150,
-      currentOccupants: 0,
-      status: ShelterRequestStatus.rejected,
-      timestamp: DateTime.now().subtract(const Duration(days: 5)),
-      amenities: ['Nước sạch', 'Thực phẩm'],
-    ),
-  ];
+  List<ShelterModel> _myShelters = [];
+  bool _isLoading = false;
+  final ShelterService _shelterService = ShelterService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMyHistory();
+  }
+
+  Future<void> _fetchMyHistory() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final results = await _shelterService.fetchMyShelters();
+      if (mounted) {
+        setState(() {
+          _myShelters = results;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi tải dữ liệu: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,15 +57,17 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E14) : const Color(0xFFF8F9FA),
       appBar: const CustomAppBar(title: 'Yêu cầu đăng ký trú ẩn'),
-      body: _mockRequests.isEmpty
-          ? _buildEmptyState(isDark)
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              itemCount: _mockRequests.length,
-              itemBuilder: (context, index) {
-                return _buildRequestCard(_mockRequests[index], isDark);
-              },
-            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _myShelters.isEmpty
+              ? _buildEmptyState(isDark)
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  itemCount: _myShelters.length,
+                  itemBuilder: (context, index) {
+                    return _buildRequestCard(_myShelters[index], isDark);
+                  },
+                ),
     );
   }
 
@@ -87,7 +95,7 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
     );
   }
 
-  Widget _buildRequestCard(ShelterRequest request, bool isDark) {
+  Widget _buildRequestCard(ShelterModel request, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -107,14 +115,11 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: request.status == ShelterRequestStatus.approved
+          onTap: request.status == 'APPROVED'
               ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ShelterManagementScreen(request: request),
-                    ),
-                  );
+                  // Since ShelterManagementScreen expects ShelterRequest, we map it or update it.
+                  // For now, let's just navigate with a placeholder or handle it.
+                  _navigateToManagement(request);
                 }
               : null,
           borderRadius: BorderRadius.circular(20),
@@ -170,21 +175,21 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
                       '${request.capacity} người',
                       isDark,
                     ),
-                    if (request.status == ShelterRequestStatus.approved)
+                    if (request.status == 'APPROVED')
                       _buildInfoColumn(
                         'Hiện có',
-                        '${request.currentOccupants} người',
+                        '${request.currentPeople} người',
                         isDark,
-                        valueColor: request.currentOccupants >= request.capacity ? Colors.red : const Color(0xFF0058BE),
+                        valueColor: request.currentPeople >= request.capacity ? Colors.red : const Color(0xFF0058BE),
                       ),
                     _buildInfoColumn(
                       'Ngày gửi',
-                      '${request.timestamp.day}/${request.timestamp.month}/${request.timestamp.year}',
+                      DateFormat('dd/MM/yyyy').format(request.createdAt),
                       isDark,
                     ),
                   ],
                 ),
-                if (request.status == ShelterRequestStatus.approved) ...[
+                if (request.status == 'APPROVED') ...[
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
@@ -196,8 +201,8 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
                     child: Center(
                       child: Text(
                         'Quản lý địa điểm',
-                        style: TextStyle(
-                          color: const Color(0xFF0058BE),
+                        style: const TextStyle(
+                          color: Color(0xFF0058BE),
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -213,27 +218,70 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
     );
   }
 
-  Widget _buildStatusBadge(ShelterRequest request) {
+  Widget _buildStatusBadge(ShelterModel request) {
+    Color color = Colors.grey;
+    String label = request.status;
+    IconData icon = Icons.help_outline;
+
+    switch (request.status) {
+      case 'APPROVED':
+        color = Colors.green;
+        label = 'Đã phê duyệt';
+        icon = Icons.check_circle_outline;
+        break;
+      case 'PENDING':
+        color = Colors.orange;
+        label = 'Đang chờ duyệt';
+        icon = Icons.hourglass_empty;
+        break;
+      case 'REJECTED':
+        color = Colors.red;
+        label = 'Từ chối';
+        icon = Icons.error_outline;
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: request.statusColor.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(request.statusIcon, size: 12, color: request.statusColor),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            request.statusLabel,
+            label,
             style: TextStyle(
-              color: request.statusColor,
+              color: color,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToManagement(ShelterModel shelter) {
+    // Mapping ShelterModel back to ShelterRequest loosely for the screen
+    final request = ShelterRequest(
+      id: shelter.id.toString(),
+      name: shelter.name,
+      address: shelter.address,
+      capacity: shelter.capacity,
+      currentOccupants: shelter.currentPeople,
+      status: ShelterRequestStatus.approved,
+      timestamp: shelter.createdAt,
+      amenities: [],
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ShelterManagementScreen(request: request),
       ),
     );
   }
