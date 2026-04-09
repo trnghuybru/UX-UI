@@ -5,6 +5,7 @@ import '../widgets/custom_app_bar.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/shelter_request_history_screen.dart';
 import '../services/user_session.dart';
+import '../screens/rescue_list_screen.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -370,6 +371,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }),
           _buildMenuItem(Icons.settings_outlined, 'Cài đặt nâng cao', true, () {}),
+          _buildMenuItem(Icons.sos_outlined, 'Danh sách cứu trợ', true, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const RescueListScreen()),
+            );
+          }),
           _buildMenuItem(Icons.privacy_tip_outlined, 'Quyền riêng tư', false, () {}),
         ],
       ),

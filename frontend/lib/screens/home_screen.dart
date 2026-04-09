@@ -28,6 +28,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchWeather() async {
     try {
       final pos = await LocationService.getCurrentLocation();
+      if (pos == null) {
+        if (mounted) setState(() => _weatherLoading = false);
+        return;
+      }
       final data = await WeatherService().fetchAll(pos.lat, pos.lon);
       if (mounted) setState(() { _weather = data.current; _weatherLoading = false; });
     } catch (_) {

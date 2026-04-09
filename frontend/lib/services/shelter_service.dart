@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/shelter_model.dart';
 import 'user_session.dart';
 
+import '../config/api_config.dart';
+
 class ShelterService {
-  // Use 10.0.2.2 for Android emulator, 127.0.0.1 for iOS/Desktop
-  static final String baseUrl = Platform.isAndroid 
-      ? 'http://10.0.2.2:5000/api' 
-      : 'http://127.0.0.1:5000/api';
+  static final String baseUrl = ApiConfig.apiUrl;
 
   Future<List<ShelterModel>> fetchShelters() async {
     try {

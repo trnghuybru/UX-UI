@@ -1,13 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
+import '../config/api_config.dart';
 
 class AuthService {
-  // Use 10.0.2.2 for Android emulator to access computer localhost, 127.0.0.1 for iOS
-  static final String baseUrl = Platform.isAndroid 
-      ? 'http://10.0.2.2:5000/api' 
-      : 'http://127.0.0.1:5000/api';
+  static final String baseUrl = ApiConfig.apiUrl;
 
   Future<AuthResponse?> login(String email, String password) async {
     try {

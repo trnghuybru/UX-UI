@@ -31,26 +31,78 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   Future<void> _calculateAndDrawRoute() async {
     try {
-      // 1. Get current location
-      final userPos = await LocationService.getCurrentLocation();
+      int retryCount = 0;
+      ({double lat, double lon})? userPos;
+
+      while (retryCount < 3 && userPos == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(retryCount == 0 ? 'Đang xác định vị trí của bạn...' : 'Đang thử định vị lại lần $retryCount...'), 
+              duration: const Duration(seconds: 2)
+            )
+          );
+        }
+        
+        userPos = await LocationService.getCurrentLocation();
+        if (userPos == null) {
+          retryCount++;
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      }
+      
+      if (userPos == null) {
+        if (mounted) {
+          setState(() => _isLoadingRoute = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Không thể lấy vị trí sau nhiều lần thử. Vui lòng bật GPS và cho phép trình duyệt truy cập vị trí.'),
+              backgroundColor: Colors.redAccent,
+              duration: Duration(seconds: 6),
+            )
+          );
+        }
+        return;
+      }
+
       final LatLng origin = LatLng(userPos.lat, userPos.lon);
       final LatLng destination = LatLng(widget.shelter.lat, widget.shelter.lng);
+      
+      // Update camera to user location once found
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(origin, 14));
 
-      // 2. Fetch route from service
-      final List<LatLng> points = await DirectionsService.getRoute(origin, destination);
+      await Future.delayed(const Duration(milliseconds: 500)); // Ensure style is ready
+      final res = await DirectionsService.getRoute(origin, destination);
+      final List<LatLng> points = res.points;
 
       if (mounted) {
+        if (points.isEmpty) {
+           setState(() => _isLoadingRoute = false);
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text('Chỉ đường thất bại: ${res.status}. Vui lòng kiểm tra lại.'),
+               duration: const Duration(seconds: 5),
+               backgroundColor: Colors.orange,
+             )
+           );
+           return;
+        }
+
         setState(() {
           _routePoints = points;
           _isLoadingRoute = false;
-          _distanceKm = LocationService.calculateDistance(
-            origin.latitude, origin.longitude, 
-            destination.latitude, destination.longitude
-          );
+          _distanceKm = LocationService.calculateDistance(origin.latitude, origin.longitude, destination.latitude, destination.longitude);
         });
 
         if (points.isNotEmpty) {
-          // 3. Draw on map
+          await _mapController?.addCircle(CircleOptions(
+            geometry: origin,
+            circleColor: '#3B82F6',
+            circleRadius: 8.0,
+            circleStrokeWidth: 2.0,
+            circleStrokeColor: '#FFFFFF',
+          ));
+
           await _mapController?.addLine(LineOptions(
             geometry: points,
             lineColor: "#0058BE",
@@ -58,38 +110,35 @@ class _NavigationScreenState extends State<NavigationScreen> {
             lineOpacity: 0.9,
           ));
 
-          // 4. Zoom to fit
           double minLat = origin.latitude < destination.latitude ? origin.latitude : destination.latitude;
           double maxLat = origin.latitude > destination.latitude ? origin.latitude : destination.latitude;
           double minLng = origin.longitude < destination.longitude ? origin.longitude : destination.longitude;
           double maxLng = origin.longitude > destination.longitude ? origin.longitude : destination.longitude;
 
-          LatLngBounds bounds = LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          );
-
           _mapController?.animateCamera(
-            CameraUpdate.newLatLngBounds(bounds, left: 80, top: 150, right: 80, bottom: 150),
+            CameraUpdate.newLatLngBounds(LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), left: 100, top: 200, right: 100, bottom: 200),
           );
           
-          // Add marker for destination
-          await _mapController?.addSymbol(SymbolOptions(
+          await _mapController?.addCircle(CircleOptions(
             geometry: destination,
-            iconImage: "marker-15",
-            textField: widget.shelter.name,
-            textOffset: const Offset(0, 2),
-            textColor: '#B90538',
-            textSize: 14.0,
+            circleColor: '#EF4444',
+            circleRadius: 10.0,
+            circleStrokeWidth: 4.0,
+            circleStrokeColor: '#FFFFFF',
           ));
+
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text('Đã tính được lộ trình: ${_distanceKm.toStringAsFixed(1)} km'),
+               duration: const Duration(seconds: 3),
+             )
+           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingRoute = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi hướng dẫn: $e')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     }
   }

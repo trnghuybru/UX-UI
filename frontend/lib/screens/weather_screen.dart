@@ -24,6 +24,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   Future<_Bundle> _load() async {
     final pos = await LocationService.getCurrentLocation();
+    if (pos == null) throw Exception('Không thể lấy vị trí hiện tại. Vui lòng bật GPS.');
     final data = await _service.fetchAll(pos.lat, pos.lon);
     return _Bundle(current: data.current, forecast: data.forecast);
   }
@@ -316,7 +317,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 overflow: TextOverflow.ellipsis),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => setState(() => _future = _load()),
+              onPressed: () {
+                setState(() {
+                  _future = _load();
+                });
+              },
               icon: const Icon(Icons.refresh),
               label: const Text('Thử lại'),
               style: ElevatedButton.styleFrom(

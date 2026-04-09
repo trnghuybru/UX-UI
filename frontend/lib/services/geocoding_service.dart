@@ -35,4 +35,24 @@ class GeocodingService {
       return null;
     }
   }
+
+  static Future<String?> reverseGeocode(double lat, double lng) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl?latlng=$lat,$lng&api_key=$_apiKey'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        
+        if (data['status'] == 'OK' && data['results'] != null && data['results'].isNotEmpty) {
+          return data['results'][0]['formatted_address'];
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Reverse Geocoding Error: $e');
+      return null;
+    }
+  }
 }

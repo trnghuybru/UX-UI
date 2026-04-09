@@ -1,52 +1,86 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:location/location.dart';
+import 'package:flutter/foundation.dart';
+import 'package:location/location.dart' as loc;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class LocationService {
-  static const double _defaultLat = 15.978765;
-  static const double _defaultLon = 108.236751;
 
   static Future<bool> requestPermissions() async {
-    final location = Location();
+    final location = loc.Location();
     
-    // Check/request service
-    bool serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) return false;
+    // 1. Check and request location SERVICE (GPS toggle)
+    try {
+      bool serviceEnabled = await location.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          debugPrint('Location service NOT ENABLED');
+          return false;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking location service: $e');
     }
 
-    // Check/request permission
-    PermissionStatus permission = await location.hasPermission();
-    if (permission == PermissionStatus.denied) {
-      permission = await location.requestPermission();
+    if (kIsWeb) return true;
+
+    // 2. Request permission using permission_handler (more stable on Android/iOS)
+    var status = await Permission.location.status;
+    if (status.isDenied) {
+      status = await Permission.location.request();
     }
     
-    return permission == PermissionStatus.granted;
+    if (status.isPermanentlyDenied) {
+      debugPrint('Location permission PERMANENTLY DENIED. User must open settings.');
+      // Optionally show a dialog to open settings
+      return false;
+    }
+
+    return status.isGranted || status.isLimited;
   }
 
-  static Future<({double lat, double lon})> getCurrentLocation() async {
-    final location = Location();
+  static Future<({double lat, double lon})?> getCurrentLocation() async {
+    final location = loc.Location();
 
-    if (!(await requestPermissions())) {
-      return (lat: _defaultLat, lon: _defaultLon);
+    bool hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      debugPrint('LOCATION PERMISSION REFUSED');
+      return null;
     }
 
     // Set high accuracy
-    location.changeSettings(accuracy: LocationAccuracy.high);
+    location.changeSettings(accuracy: loc.LocationAccuracy.high);
 
     try {
-      // Add a 3-second timeout for emulators/slow GPS
+      debugPrint('REQUESTING CURRENT LOCATION...');
+      // Use shorter timeout but fallback to one-time data request
       final data = await location.getLocation().timeout(
-        const Duration(seconds: 3),
-        onTimeout: () => throw TimeoutException('Location timed out'),
+        const Duration(seconds: 15),
       );
-      final lat = data.latitude ?? _defaultLat;
-      final lon = data.longitude ?? _defaultLon;
+      
+      final lat = data.latitude;
+      final lon = data.longitude;
+      
+      if (lat == null || lon == null) {
+        debugPrint('Location data is NULL');
+        return null;
+      }
+      
+      debugPrint('LOCATION DETECTED: [$lat, $lon]');
       return (lat: lat, lon: lon);
-    } catch (_) {
-      return (lat: _defaultLat, lon: _defaultLon);
+    } catch (e) {
+      debugPrint('Location Error: $e');
+      
+      if (kIsWeb) {
+        debugPrint('FALLBACK MOCK LOCATION (Đà Nẵng) - Web GPS issue');
+        return (lat: 16.047079, lon: 108.206230);
+      }
+      
+      // On real devices, often the first request fails if GPS hasn't locked.
+      // We could try one more time or just return null
+      return null;
     }
   }
 

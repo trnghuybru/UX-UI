@@ -11,6 +11,7 @@ import '../services/shelter_service.dart';
 import '../services/location_service.dart';
 import '../services/directions_service.dart';
 import 'navigation_screen.dart';
+import '../services/socket_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -33,6 +34,40 @@ class _MapScreenState extends State<MapScreen> {
   Circle? _userMarkerCircle;
   StreamSubscription<loc.LocationData>? _locationSubscription;
   bool _hasFetchedInitialShelters = false;
+  final SocketService _socketService = SocketService();
+  
+  @override
+  void initState() {
+    super.initState();
+    // 1. Fetch shelters immediately
+    _fetchShelters();
+    
+    // 2. Start dynamic location tracking
+    _initLocationTracking();
+    
+    // 3. Initialize WebSocket for REAL-TIME updates
+    _socketService.initSocket(onShelterUpdate: (data) {
+      debugPrint('🔔 Map received real-time update: $data');
+      if (mounted) {
+        // Just a tiny feedback to know it arrived!
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🏠 Phát hiện địa điểm trú ẩn mới! Đang cập nhật...'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+        _fetchShelters();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _socketService.disconnect();
+    _locationSubscription?.cancel();
+    super.dispose();
+  }
 
   // Locations
   static const _hn = LatLng(21.03357551700003, 105.81911236900004);
@@ -50,38 +85,77 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _fetchShelters() async {
     if (_isLoadingShelters) return; // Concurrency protection
     
-    if (mounted) setState(() {
-      _isLoadingShelters = true;
-    });
+    // Only show loading spinner on initial fetch
+    if (mounted && _shelters.isEmpty) {
+      setState(() {
+        _isLoadingShelters = true;
+      });
+    }
 
     try {
       // 1. Get current user location
-      final userPos = await LocationService.getCurrentLocation();
-      final userLatLng = LatLng(userPos.lat, userPos.lon);
-
+      // Optimization: if we already have a location from tracking, use it!
+      final userLatLng = _userLocation;
+      
+      // If we don't even have a cached one, we can try to fetch it once,
+      // but let's be fast. Skip if we already have it.
+      if (userLatLng == null) {
+          // just try a quick fetch if first time
+          LocationService.getCurrentLocation().then((pos) {
+             if (pos != null && mounted) setState(() => _userLocation = LatLng(pos.lat, pos.lon));
+          });
+      }
+ 
       // 2. Fetch all shelters
       final allShelters = await _shelterService.fetchShelters();
-
+      
+      // LOG FOR VERIFICATION
+      debugPrint('FETCHED SHELTERS FROM BACKEND: ${allShelters.length}');
+      for (var s in allShelters) {
+        debugPrint('Shelter: ${s.name} at [${s.lat}, ${s.lng}]');
+      }
+ 
       if (mounted) {
         setState(() {
           _userLocation = userLatLng;
           _isLoadingShelters = false;
-          // 3. Filter shelters within 15km
-          _shelters = allShelters.where((s) {
-            double dist = LocationService.calculateDistance(
-              userLatLng.latitude, userLatLng.longitude, 
-              s.lat, s.lng
-            );
-            return dist <= 15.0;
-          }).toList();
+          
+          if (userLatLng != null) {
+            // 3. Try to filter by 15km
+            _shelters = allShelters.where((s) {
+              double dist = LocationService.calculateDistance(
+                userLatLng.latitude, userLatLng.longitude, 
+                s.lat, s.lng
+              );
+              return dist <= 15.0;
+            }).toList();
+            
+            // If none found within 15km, show all as fallback but keep sorting 
+            // by distance if location available
+            if (_shelters.isEmpty) {
+              _shelters = List.from(allShelters);
+            }
+            
+            // Sort by distance to user
+            _shelters.sort((a, b) {
+              double da = LocationService.calculateDistance(userLatLng.latitude, userLatLng.longitude, a.lat, a.lng);
+              double db = LocationService.calculateDistance(userLatLng.latitude, userLatLng.longitude, b.lat, b.lng);
+              return da.compareTo(db);
+            });
+          } else {
+             _shelters = allShelters; // Show all if location unavailable
+          }
         });
         
-        debugPrint('--- Vị trí hiện tại: ${userLatLng.latitude}, ${userLatLng.longitude}');
-        _addShelterMarkers();
-        _updateRadiusVisuals(userLatLng);
+        if (userLatLng != null) {
+           _addShelterMarkers();
+           _updateRadiusVisuals(userLatLng);
+        } else {
+           _addShelterMarkers(); // Draw on map even without user circle
+        }
         
         // Auto center on user when tab 2 is active
-        if (_selectedFilterIndex == 2) {
+        if (_selectedFilterIndex == 2 && userLatLng != null) {
           _updateCamera(2);
         }
       }
@@ -111,21 +185,18 @@ class _MapScreenState extends State<MapScreen> {
         CircleOptions(
           geometry: pos,
           circleColor: '#166534', // Same green as brand
-          circleRadius: 4.0,
-          circleStrokeWidth: 1.5,
+          circleRadius: 8.0, // Increased size for visibility
+          circleStrokeWidth: 2.0,
           circleStrokeColor: '#FFFFFF',
         )
       );
 
-      // 2. Add the descriptive symbol
+      // 2. Add the descriptive name
       _mapController!.addSymbol(
         SymbolOptions(
           geometry: pos,
-          iconImage: "marker-15",
-          iconAnchor: "bottom", // Ensuring the tip of the pin is at the location
-          iconSize: 1.2,
           textField: shelter.name,
-          textOffset: const Offset(0, 1), // Offset text to not cover pin tip
+          textOffset: const Offset(0, -1.8), // Offset text to be above the circle
           textColor: '#1B5E20',
           textSize: 11.5,
           textHaloBlur: 1.0,
@@ -136,18 +207,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _initLocationTracking();
-    _fetchShelters();
-  }
-
-  @override
-  void dispose() {
-    _locationSubscription?.cancel();
-    super.dispose();
-  }
 
   Future<void> _initLocationTracking() async {
     // 1. Force ask for permission dialog every time if not granted yet
@@ -215,10 +274,10 @@ class _MapScreenState extends State<MapScreen> {
     double zoom;
     
     if (index == 0) {
-      target = _hn;
+      target = _userLocation ?? _hn;
       zoom = 14.0;
     } else if (index == 1) {
-      target = _dn;
+      target = _userLocation ?? _dn;
       zoom = 6.0;
     } else {
       // For Shelter tab (index 2)
@@ -226,7 +285,9 @@ class _MapScreenState extends State<MapScreen> {
         target = _userLocation!;
         zoom = 10.0; // Zoom out to see the 15km circle
       } else {
-        return;
+        // If no user location yet, just stay or move to center
+        target = _dn; 
+        zoom = 5.0;
       }
     }
     
@@ -398,7 +459,7 @@ class _MapScreenState extends State<MapScreen> {
               onMapCreated: _onMapCreated,
               onStyleLoadedCallback: _onStyleLoadedCallback,
               styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
-              initialCameraPosition: const CameraPosition(target: _hn, zoom: 14.0),
+              initialCameraPosition: const CameraPosition(target: _dn, zoom: 6.0),
               myLocationEnabled: true,
               trackCameraPosition: true,
               attributionButtonPosition: null,
@@ -474,17 +535,6 @@ class _MapScreenState extends State<MapScreen> {
 
   List<Widget> _buildShelterOverlays() {
     return [
-      // Dynamic badges from API could be handled via MapLibre Symbols implemented above.
-      // We can also use Positioned widgets if we want custom Flutter UI on top of map,
-      // but Symbols are generally better for performance and panning.
-      if (_shelters.isNotEmpty) 
-        ..._shelters.take(2).map((s) => Positioned(
-          // This is a simplified positioning for demonstration on top of the stack,
-          // in a real app you'd typically use MapLibre Symbols for this.
-          left: 100.0 + (s.id * 50) % 200, 
-          top: 80.0 + (s.id * 80) % 150,
-          child: _buildShelterMapBadge(s.name)
-        )),
       Positioned(
         bottom: 24,
         left: 0,

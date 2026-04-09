@@ -4,6 +4,7 @@ import 'shelter_management_screen.dart';
 import '../models/shelter_model.dart';
 import '../services/shelter_service.dart';
 import '../services/user_session.dart';
+import '../services/socket_service.dart';
 import 'package:intl/intl.dart';
 
 class ShelterRequestHistoryScreen extends StatefulWidget {
@@ -22,6 +23,19 @@ class _ShelterRequestHistoryScreenState extends State<ShelterRequestHistoryScree
   void initState() {
     super.initState();
     _fetchMyHistory();
+    
+    // Listen for real-time approval updates
+    SocketService().initSocket(onShelterUpdate: (data) {
+      if (mounted) _fetchMyHistory();
+    });
+  }
+
+  @override
+  void dispose() {
+    // Note: In a singleton SocketService, you might not want to disconnect entirely
+    // but just off the listener. Or leave it to the next screen.
+    // However, our refactored SocketService disconnect() clears the callback.
+    super.dispose();
   }
 
   Future<void> _fetchMyHistory() async {
