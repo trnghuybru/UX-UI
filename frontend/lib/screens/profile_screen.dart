@@ -6,6 +6,7 @@ import '../screens/edit_profile_screen.dart';
 import '../screens/shelter_request_history_screen.dart';
 import '../services/user_session.dart';
 import '../screens/rescue_list_screen.dart';
+import '../screens/emergency_contacts_screen.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -363,7 +364,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildMenuItem(Icons.history, 'Lịch sử cảnh báo', true, () {}),
-          _buildMenuItem(Icons.contact_phone_outlined, 'Danh bạ khẩn cấp', true, () {}),
+          _buildMenuItem(Icons.contact_phone_outlined, 'Danh bạ khẩn cấp', true, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const EmergencyContactsScreen()),
+            );
+          }),
           _buildMenuItem(Icons.home_work_outlined, 'Yêu cầu đăng ký trú ẩn', true, () {
             Navigator.push(
               context,

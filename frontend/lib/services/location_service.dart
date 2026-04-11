@@ -61,20 +61,20 @@ class LocationService {
     try {
       debugPrint('🚀 ATTEMPTING TO GET LOCATION...');
       
-      // Try a race between actual getLocation and the stream's first event
-      // Sometimes one works while the other hangs on Android
-      final data = await Future.any([
-        _location.getLocation(),
-        _location.onLocationChanged.first,
-      ]).timeout(const Duration(seconds: 8));
+      // Attempt 1: Get the LAST KNOWN location first (Immediate)
+      // On real devices, this is often very accurate and fast
+      final data = await _location.getLocation().timeout(
+        const Duration(seconds: 5),
+      );
       
       if (data.latitude != null && data.longitude != null) {
+        debugPrint('LOCATION DETECTED: [${data.latitude}, ${data.longitude}]');
         _cachedLocation = (lat: data.latitude!, lon: data.longitude!);
         _lastFetchTime = DateTime.now();
         return _cachedLocation;
       }
     } catch (e) {
-      debugPrint('⚠️ Location fetch failed: $e. Using cache if available.');
+      debugPrint('⚠️ Location fetch timed out/failed: $e. Using cache.');
     }
     
     return _cachedLocation;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+import 'news_detail_screen.dart';
 
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});
@@ -19,24 +20,33 @@ class NewsScreen extends StatelessWidget {
           children: [
             _buildCategories(isDark),
             const SizedBox(height: 24),
-            _buildEmergencyNewsCard(isDark),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NewsDetailScreen())),
+              child: _buildEmergencyNewsCard(isDark),
+            ),
             const SizedBox(height: 24),
-            _buildNormalNewsCard(
-              isDark: isDark,
-              tag: 'CẢNH BÁO NGẬP',
-              tagColor: const Color(0xFFFFB3B8),
-              title: 'Danh sách các điểm ngập tại Hà Nội sáng\nnay',
-              time: '15 phút trước',
-              imageUrl: 'https://placehold.co/356x160',
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NewsDetailScreen(title: 'Danh sách các điểm ngập tại Hà Nội sáng nay', category: 'CẢNH BÁO NGẬP'))),
+              child: _buildNormalNewsCard(
+                isDark: isDark,
+                tag: 'CẢNH BÁO NGẬP',
+                tagColor: const Color(0xFFFFB3B8),
+                title: 'Danh sách các điểm ngập tại Hà Nội sáng\nnay',
+                time: '15 phút trước',
+                imageUrl: 'https://placehold.co/356x160',
+              ),
             ),
             const SizedBox(height: 16),
-            _buildNormalNewsCard(
-              isDark: isDark,
-              tag: 'DỰ BÁO TUẦN',
-              tagColor: const Color(0xFFADC6FF),
-              title: 'Dự báo thời tiết 7 ngày tới: Mưa diện rộng\nkéo dài',
-              time: '2 giờ trước',
-              imageUrl: 'https://placehold.co/356x160',
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NewsDetailScreen(title: 'Dự báo thời tiết 7 ngày tới: Mưa diện rộng kéo dài', category: 'DỰ BÁO TUẦN'))),
+              child: _buildNormalNewsCard(
+                isDark: isDark,
+                tag: 'DỰ BÁO TUẦN',
+                tagColor: const Color(0xFFADC6FF),
+                title: 'Dự báo thời tiết 7 ngày tới: Mưa diện rộng\nkéo dài',
+                time: '2 giờ trước',
+                imageUrl: 'https://placehold.co/356x160',
+              ),
             ),
             const SizedBox(height: 16),
             _buildSafetyGuideCard(isDark),

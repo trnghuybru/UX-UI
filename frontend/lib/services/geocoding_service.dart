@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class GeocodingService {
   // Replace with your Goong API Key if different from Map Key
-  static const String _apiKey = 'yoNpi4Q0a42LWpIEJZo6c2b1fd6QWcO6RzI2iMdu';
+  static const String _apiKey = 'JTrWfKeh2gAU10vkDgc2k6NkgJGnvB1GKTVTqK0d';
   static const String _baseUrl = 'https://rsapi.goong.io/geocode';
 
   static Future<Map<String, double>?> getCoordinates(String address) async {

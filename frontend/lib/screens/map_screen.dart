@@ -34,6 +34,7 @@ class _MapScreenState extends State<MapScreen> {
   Circle? _userMarkerCircle;
   StreamSubscription<loc.LocationData>? _locationSubscription;
   bool _hasFetchedInitialShelters = false;
+  bool _isLocatingUser = true;
   final SocketService _socketService = SocketService();
   
   @override
@@ -90,9 +91,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _fetchShelters() async {
-    if (_isLoadingShelters) return; // Concurrency protection
-    
-    // Only show loading spinner on initial fetch
+    if (_isLoadingShelters) return;
+
     if (mounted && _shelters.isEmpty) {
       setState(() {
         _isLoadingShelters = true;
@@ -100,73 +100,59 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     try {
-      // 1. Get current user location
-      // Optimization: if we already have a location from tracking, use it!
       final userLatLng = _userLocation;
-      
-      // If we don't even have a cached one, we can try to fetch it once,
-      // but let's be fast. Skip if we already have it.
       if (userLatLng == null) {
-          // just try a quick fetch if first time
-          LocationService.getCurrentLocation().then((pos) {
-             if (pos != null && mounted) setState(() => _userLocation = LatLng(pos.lat, pos.lon));
-          });
+        LocationService.getCurrentLocation().then((pos) {
+          if (pos != null && mounted) {
+            setState(() => _userLocation = LatLng(pos.lat, pos.lon));
+          }
+        });
       }
- 
-      // 2. Fetch all shelters
+
       final allShelters = await _shelterService.fetchShelters();
-      
-      // LOG FOR VERIFICATION
-      debugPrint('FETCHED SHELTERS FROM BACKEND: ${allShelters.length}');
-      for (var s in allShelters) {
-        debugPrint('Shelter: ${s.name} at [${s.lat}, ${s.lng}]');
-      }
- 
+
       if (mounted) {
         setState(() {
-          _userLocation = userLatLng;
           _isLoadingShelters = false;
-          
           if (userLatLng != null) {
-            // 3. Try to filter by 15km
             _shelters = allShelters.where((s) {
               double dist = LocationService.calculateDistance(
-                userLatLng.latitude, userLatLng.longitude, 
-                s.lat, s.lng
-              );
+                  userLatLng.latitude,
+                  userLatLng.longitude,
+                  s.lat,
+                  s.lng);
               return dist <= 15.0;
             }).toList();
-            
-            // If none found within 15km, show all as fallback but keep sorting 
-            // by distance if location available
+
             if (_shelters.isEmpty) {
               _shelters = List.from(allShelters);
             }
-            
-            // Sort by distance to user
+
             _shelters.sort((a, b) {
-              double da = LocationService.calculateDistance(userLatLng.latitude, userLatLng.longitude, a.lat, a.lng);
-              double db = LocationService.calculateDistance(userLatLng.latitude, userLatLng.longitude, b.lat, b.lng);
+              double da = LocationService.calculateDistance(
+                  userLatLng.latitude, userLatLng.longitude, a.lat, a.lng);
+              double db = LocationService.calculateDistance(
+                  userLatLng.latitude, userLatLng.longitude, b.lat, b.lng);
               return da.compareTo(db);
             });
           } else {
-             _shelters = allShelters; // Show all if location unavailable
+            _shelters = allShelters;
           }
         });
-        
+
         if (userLatLng != null) {
-           _addShelterMarkers();
-           _updateRadiusVisuals(userLatLng);
+          _addShelterMarkers();
+          _updateRadiusVisuals(userLatLng);
         } else {
-           _addShelterMarkers(); // Draw on map even without user circle
+          _addShelterMarkers();
         }
-        
-        // Auto center on user when tab 2 is active
+
         if (_selectedFilterIndex == 2 && userLatLng != null) {
           _updateCamera(2);
         }
       }
     } catch (e) {
+      debugPrint('Error fetching shelters: $e');
       if (mounted) {
         setState(() {
           _isLoadingShelters = false;
@@ -236,25 +222,31 @@ class _MapScreenState extends State<MapScreen> {
       if (data.latitude == null || data.longitude == null) return;
       final newLatLng = LatLng(data.latitude!, data.longitude!);
       
+      bool isFirstFix = _userLocation == null;
+
       if (mounted) {
         setState(() {
           _userLocation = newLatLng;
-          // Only fetch FROM API once on first location, or manually
-          if (!_hasFetchedInitialShelters) {
-            _hasFetchedInitialShelters = true;
-            _fetchShelters();
-          }
+          _isLocatingUser = false;
         });
 
-        // If currently in Shelter tab, keep visuals centered
+        // 1. Initial FETCH if not done
+        if (!_hasFetchedInitialShelters) {
+          _hasFetchedInitialShelters = true;
+          _fetchShelters();
+        }
+
+        // 2. Initial CAMERA center
+        if (isFirstFix && _mapController != null) {
+          _mapController!.animateCamera(CameraUpdate.newCameraPosition(
+            CameraPosition(target: newLatLng, zoom: 14.0),
+          ));
+        }
+
+        // 3. Keep visuals updated (silent)
+        _updateUserMarker(newLatLng);
         if (_selectedFilterIndex == 2) {
-          _updateUserMarker(newLatLng);
           _updateRadiusVisuals(newLatLng);
-          if (_mapController != null) {
-            _mapController!.animateCamera(CameraUpdate.newCameraPosition(
-              CameraPosition(target: newLatLng, zoom: 10.0), // Zoom out more to see the edge
-            ));
-          }
         }
       }
     }
@@ -479,7 +471,7 @@ class _MapScreenState extends State<MapScreen> {
             child: MapLibreMap(
               onMapCreated: _onMapCreated,
               onStyleLoadedCallback: _onStyleLoadedCallback,
-              styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+              styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=ZcFrRowz4bVq1wtlIWDvEikppTbC863E1oqcAycg",
               initialCameraPosition: const CameraPosition(target: _dn, zoom: 6.0),
               myLocationEnabled: true,
               trackCameraPosition: true,
@@ -498,9 +490,6 @@ class _MapScreenState extends State<MapScreen> {
 
   List<Widget> _buildNormalOverlays() {
     return [
-      Positioned(left: 120, top: 150, child: _buildMapBadge('NGUY HIỂM CAO', const Color(0xFFB90538))),
-      Positioned(left: 180, top: 250, child: _buildMapBadge('CẢNH BÁO', const Color(0xFFF97316))),
-      Positioned(left: 200, top: 320, child: _buildMapBadge('THEO DÕI', const Color(0xFFEAB308))),
       Positioned(
         right: 16,
         top: 16,
@@ -1194,5 +1183,33 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
     );
+  }
+
+  // --- LOCATION VISUALS --- //
+  
+  void _addStaticHazardMarkers() {
+    if (_mapController == null) return;
+
+    // These coordinates are in Da Nang/Quang Tri area
+    final hazards = [
+      (pos: const LatLng(16.06, 108.20), text: 'NGUY HIỂM CAO', color: '#B90538'),
+      (pos: const LatLng(16.08, 108.15), text: 'CẢNH BÁO', color: '#F97316'),
+      (pos: const LatLng(16.10, 108.22), text: 'THEO DÕI', color: '#EAB308'),
+    ];
+
+    for (var h in hazards) {
+      _mapController!.addSymbol(
+        SymbolOptions(
+          geometry: h.pos,
+          textField: h.text,
+          textSize: 10,
+          textColor: '#FFFFFF',
+          textOpacity: 0.9,
+          textHaloColor: h.color,
+          textHaloWidth: 1.0,
+          textOffset: const Offset(0, 0),
+        ),
+      );
+    }
   }
 }

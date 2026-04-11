@@ -445,7 +445,7 @@ class _SosScreenState extends State<SosScreen> {
                 MapLibreMap(
                   onMapCreated: _onMapCreated,
                   onMapClick: (point, latlng) => _onMapClick(latlng),
-                  styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=jTmhSjJz211NLnmhk3nV79bvgmehQxgNhiIUGDWT",
+                  styleString: "https://tiles.goong.io/assets/goong_map_highlight.json?api_key=ZcFrRowz4bVq1wtlIWDvEikppTbC863E1oqcAycg",
                   initialCameraPosition: CameraPosition(
                     target: _currentLocation ?? const LatLng(16.047079, 108.206230), 
                     zoom: 14.0
@@ -480,18 +480,35 @@ class _SosScreenState extends State<SosScreen> {
                 ),
 
                 Positioned(
+                  top: 12,
+                  left: 12,
+                  child: GestureDetector(
+                    onTap: _initLocation,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: ShapeDecoration(
+                        color: isDark ? const Color(0xE51E293B) : Colors.white.withAlpha(230), 
+                        shape: const CircleBorder(),
+                        shadows: [BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 4, offset: const Offset(0, 2))],
+                      ),
+                      child: Icon(Icons.my_location, color: isDark ? const Color(0xFF89ACFF) : const Color(0xFF0058BE), size: 20),
+                    ),
+                  ),
+                ),
+
+                Positioned(
                   bottom: 12,
                   left: 12,
                   right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: ShapeDecoration(
-                      color: isDark ? const Color(0xE51E293B) : Colors.white.withValues(alpha: 0.9), 
+                      color: isDark ? const Color(0xE51E293B) : Colors.white.withAlpha(230), 
                       shape: RoundedRectangleBorder(
                         side: BorderSide(width: 1, color: isDark ? const Color(0x33475569) : const Color(0xFFE2E8F0)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      shadows: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                      shadows: [BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 4, offset: const Offset(0, 2))],
                     ),
                     child: Text(
                       _currentAddress, 
@@ -509,9 +526,30 @@ class _SosScreenState extends State<SosScreen> {
                 
                 if (_isLocating)
                   Container(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withAlpha(25),
                     child: const Center(child: CircularProgressIndicator()),
                   ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _initLocation,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.refresh, size: 16, color: isDark ? const Color(0xFF89ACFF) : const Color(0xFF0058BE)),
+                const SizedBox(width: 4),
+                Text(
+                  'Lấy lại vị trí hiện tại',
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFF89ACFF) : const Color(0xFF0058BE),
+                    fontSize: 13,
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ],
             ),
           ),
