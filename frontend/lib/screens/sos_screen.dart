@@ -7,6 +7,8 @@ import '../services/location_service.dart';
 import '../services/geocoding_service.dart';
 import '../services/sos_service.dart';
 import '../services/user_session.dart';
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class SosScreen extends StatefulWidget {
   const SosScreen({super.key});
@@ -64,7 +66,7 @@ class _SosScreenState extends State<SosScreen> {
         lng: _currentLocation!.longitude,
         peopleCount: int.tryParse(_peopleController.text),
         description: _descController.text,
-        token: UserSession().token,
+        token: UserSession().accessToken,
       );
 
       if (mounted) {
@@ -90,26 +92,74 @@ class _SosScreenState extends State<SosScreen> {
     }
   }
 
+  Future<void> _sendSmsSos() async {
+    if (_currentLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chờ xác định vị trí của bạn.')),
+      );
+      return;
+    }
+
+    if (_phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập số điện thoại liên hệ.')),
+      );
+      return;
+    }
+
+    final sosData = {
+      'phone': _phoneController.text,
+      'people_count': int.tryParse(_peopleController.text) ?? 1,
+      'lat': _currentLocation!.latitude,
+      'lng': _currentLocation!.longitude,
+      'description': _descController.text,
+    };
+
+    final jsonString = json.encode(sosData);
+    final Uri smsLaunchUri = Uri(
+      scheme: 'sms',
+      path: '0972087664',
+      queryParameters: <String, String>{
+        'body': jsonString,
+      },
+    );
+
+    try {
+      if (await canLaunchUrl(smsLaunchUri)) {
+        await launchUrl(smsLaunchUri);
+      } else {
+        await launchUrl(smsLaunchUri);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể mở ứng dụng tin nhắn: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _initLocation() async {
+    setState(() => _isLocating = true);
+    
     final pos = await LocationService.getCurrentLocation();
     if (mounted) {
       if (pos != null) {
         final latlng = LatLng(pos.lat, pos.lon);
         setState(() {
            _currentLocation = latlng;
-           _isLocating = true;
+           _isLocating = false; // GPS found, hide blocking spinner
         });
         
-        // Parallel fetch address and update UI
+        _updateCamera();
+        _addRedDot();
+
+        // Background fetch address
         GeocodingService.reverseGeocode(pos.lat, pos.lon).then((addr) {
            if (mounted) setState(() {
              _currentAddress = addr ?? 'Tọa độ: ${pos.lat}, ${pos.lon}';
-             _isLocating = false;
            });
         });
-
-        _updateCamera();
-        _addRedDot();
       } else {
         setState(() => _isLocating = false);
       }
@@ -523,6 +573,31 @@ class _SosScreenState extends State<SosScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white, fontSize: 18, fontFamily: 'Montserrat', fontWeight: FontWeight.w800),
                 ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: _sendSmsSos,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: ShapeDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(width: 2, color: isDark ? const Color(0xFFEF4444) : const Color(0xFFB90538)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: Text(
+              'GỬI QUA TIN NHẮN (SMS)',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? const Color(0xFFEF4444) : const Color(0xFFB90538),
+                fontSize: 18,
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 16),

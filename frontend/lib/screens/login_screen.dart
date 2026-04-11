@@ -6,6 +6,7 @@ import '../widgets/shell_screen.dart';
 import '../services/auth_service.dart';
 import '../services/user_session.dart';
 import '../models/user_model.dart';
+import 'offline_sos_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -383,30 +384,72 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildBottomText(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
+    return Column(
       children: [
-        Text(
-          'Chưa có tài khoản? ',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SignupScreen()),
-            );
-          },
-          child: Text(
-            'Đăng ký ngay',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: [
+            Text(
+              'Chưa có tài khoản? ',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
             ),
-          ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignupScreen()),
+                );
+              },
+              child: Text(
+                'Đăng ký ngay',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 32),
+        _buildEmergencyTrigger(),
       ],
+    );
+  }
+
+  Widget _buildEmergencyTrigger() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const OfflineSosScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFB90538).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFB90538).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.emergency, color: Color(0xFFB90538), size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              'KHẨN CẤP (GỬI SOS NGOẠI TUYẾN)',
+              style: TextStyle(
+                color: Color(0xFFB90538),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   // Use your computer's local IP address instead of 10.0.2.2 for real device testing
   // Make sure your phone and computer are on the same Wi-Fi network.
-  static const String _localIp = '192.168.1.49'; // Updated to new Wi-Fi IP
+  static const String _localIp = '10.0.14.121'; // Updated to new Wi-Fi IP
   
   static String get baseUrl {
     if (kIsWeb) {

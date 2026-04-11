@@ -39,13 +39,20 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    // 1. Fetch shelters immediately
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    // 1. Fetch shelters immediately (may use cache)
     _fetchShelters();
     
-    // 2. Start dynamic location tracking
+    // 2. Request permissions FIRST and wait
+    await LocationService.requestPermissions();
+    
+    // 3. Start dynamic location tracking
     _initLocationTracking();
     
-    // 3. Initialize WebSocket for REAL-TIME updates
+    // 4. Initialize WebSocket
     _socketService.initSocket(onShelterUpdate: (data) {
       debugPrint('🔔 Map received real-time update: $data');
       if (mounted) {
@@ -255,11 +262,25 @@ class _MapScreenState extends State<MapScreen> {
     // 2. Start listening
     _locationSubscription = location.onLocationChanged.listen(onUpdate);
 
-    // 3. Get initial fixed location immediately (Crucial for emulators)
+    // 3. Get initial location immediately
     try {
-      final initialData = await location.getLocation();
-      onUpdate(initialData);
-    } catch (_) {}
+      // Try cached first for instant response
+      final cachedPos = await LocationService.getCurrentLocation();
+      if (cachedPos != null) {
+        onUpdate(loc.LocationData.fromMap({
+          'latitude': cachedPos.lat,
+          'longitude': cachedPos.lon,
+        }));
+      } else {
+        // Fallback to fresh fetch with short timeout
+        final initialData = await location.getLocation().timeout(
+          const Duration(seconds: 3),
+        );
+        onUpdate(initialData);
+      }
+    } catch (_) {
+      debugPrint('Initial location fetch timed out or failed, waiting for stream...');
+    }
   }
 
   Future<void> _requestPermissions() async {
@@ -486,9 +507,20 @@ class _MapScreenState extends State<MapScreen> {
         child: Column(
           spacing: 8,
           children: [
-            _buildMapControlButton(Icons.layers_outlined),
-            _buildMapControlButton(Icons.my_location),
-            _buildMapControlButton(Icons.map, backgroundColor: const Color(0xFF0058BE), iconColor: Colors.white),
+            _buildMapControlButton(Icons.layers_outlined, onTap: () {
+               // Cycle map layers if needed
+            }),
+            _buildMapControlButton(Icons.my_location, onTap: () {
+               if (_userLocation != null) _updateCamera(_selectedFilterIndex);
+            }),
+            _buildMapControlButton(Icons.map, 
+              backgroundColor: const Color(0xFF0058BE), 
+              iconColor: Colors.white,
+              onTap: () {
+                // Return to default view
+                _updateCamera(0);
+              }
+            ),
           ],
         ),
       ),
@@ -605,19 +637,22 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildMapControlButton(IconData icon, {Color backgroundColor = Colors.white, Color iconColor = const Color(0xFF5A5F6B)}) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Color(0x19000000), blurRadius: 6, offset: Offset(0, 4), spreadRadius: -4),
-          BoxShadow(color: Color(0x19000000), blurRadius: 15, offset: Offset(0, 10), spreadRadius: -3),
-        ],
+  Widget _buildMapControlButton(IconData icon, {VoidCallback? onTap, Color backgroundColor = Colors.white, Color iconColor = const Color(0xFF5A5F6B)}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(color: Color(0x19000000), blurRadius: 6, offset: Offset(0, 4), spreadRadius: -4),
+            BoxShadow(color: Color(0x19000000), blurRadius: 15, offset: Offset(0, 10), spreadRadius: -3),
+          ],
+        ),
+        child: Icon(icon, color: iconColor, size: 20),
       ),
-      child: Icon(icon, color: iconColor, size: 20),
     );
   }
 

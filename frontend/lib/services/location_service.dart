@@ -6,15 +6,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class LocationService {
+  static final loc.Location _location = loc.Location();
+  static ({double lat, double lon})? _cachedLocation;
+  static DateTime? _lastFetchTime;
 
   static Future<bool> requestPermissions() async {
-    final location = loc.Location();
-    
     // 1. Check and request location SERVICE (GPS toggle)
     try {
-      bool serviceEnabled = await location.serviceEnabled();
+      bool serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
-        serviceEnabled = await location.requestService();
+        serviceEnabled = await _location.requestService();
         if (!serviceEnabled) {
           debugPrint('Location service NOT ENABLED');
           return false;
@@ -26,15 +27,14 @@ class LocationService {
 
     if (kIsWeb) return true;
 
-    // 2. Request permission using permission_handler (more stable on Android/iOS)
+    // 2. Request permission using permission_handler
     var status = await Permission.location.status;
     if (status.isDenied) {
       status = await Permission.location.request();
     }
     
     if (status.isPermanentlyDenied) {
-      debugPrint('Location permission PERMANENTLY DENIED. User must open settings.');
-      // Optionally show a dialog to open settings
+      debugPrint('Location permission PERMANENTLY DENIED.');
       return false;
     }
 
@@ -42,46 +42,42 @@ class LocationService {
   }
 
   static Future<({double lat, double lon})?> getCurrentLocation() async {
-    final location = loc.Location();
+    // Check cache first (valid for 60 seconds)
+    if (_cachedLocation != null && _lastFetchTime != null) {
+      if (DateTime.now().difference(_lastFetchTime!).inSeconds < 60) {
+        return _cachedLocation;
+      }
+    }
 
     bool hasPermission = await requestPermissions();
-    if (!hasPermission) {
-      debugPrint('LOCATION PERMISSION REFUSED');
-      return null;
-    }
+    if (!hasPermission) return null;
 
-    // Set high accuracy
-    location.changeSettings(accuracy: loc.LocationAccuracy.high);
+    _location.changeSettings(
+      accuracy: loc.LocationAccuracy.high,
+      interval: 1000,
+      distanceFilter: 10,
+    );
 
     try {
-      debugPrint('REQUESTING CURRENT LOCATION...');
-      // Use shorter timeout but fallback to one-time data request
-      final data = await location.getLocation().timeout(
-        const Duration(seconds: 15),
-      );
+      debugPrint('🚀 ATTEMPTING TO GET LOCATION...');
       
-      final lat = data.latitude;
-      final lon = data.longitude;
+      // Try a race between actual getLocation and the stream's first event
+      // Sometimes one works while the other hangs on Android
+      final data = await Future.any([
+        _location.getLocation(),
+        _location.onLocationChanged.first,
+      ]).timeout(const Duration(seconds: 8));
       
-      if (lat == null || lon == null) {
-        debugPrint('Location data is NULL');
-        return null;
+      if (data.latitude != null && data.longitude != null) {
+        _cachedLocation = (lat: data.latitude!, lon: data.longitude!);
+        _lastFetchTime = DateTime.now();
+        return _cachedLocation;
       }
-      
-      debugPrint('LOCATION DETECTED: [$lat, $lon]');
-      return (lat: lat, lon: lon);
     } catch (e) {
-      debugPrint('Location Error: $e');
-      
-      if (kIsWeb) {
-        debugPrint('FALLBACK MOCK LOCATION (Đà Nẵng) - Web GPS issue');
-        return (lat: 16.047079, lon: 108.206230);
-      }
-      
-      // On real devices, often the first request fails if GPS hasn't locked.
-      // We could try one more time or just return null
-      return null;
+      debugPrint('⚠️ Location fetch failed: $e. Using cache if available.');
     }
+    
+    return _cachedLocation;
   }
 
   static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

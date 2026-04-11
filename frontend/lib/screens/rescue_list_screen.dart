@@ -114,7 +114,7 @@ class _RescueListScreenState extends State<RescueListScreen> {
     final timeStr = DateFormat('HH:mm - dd/MM').format(res.createdAt);
     
     return Container(
-      margin: const EdgeInsets.bottom(16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: ShapeDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         shape: RoundedRectangleBorder(
