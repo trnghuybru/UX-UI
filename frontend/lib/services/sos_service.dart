@@ -7,6 +7,7 @@ class SosRequestModel {
   final String phoneNumber;
   final String? type;
   final String? description;
+  final int peopleCount;
   final double? lat;
   final double? lng;
   final String status;
@@ -17,6 +18,7 @@ class SosRequestModel {
     required this.phoneNumber,
     this.type,
     this.description,
+    required this.peopleCount,
     this.lat,
     this.lng,
     required this.status,
@@ -29,6 +31,7 @@ class SosRequestModel {
       phoneNumber: json['phone_number'] ?? 'Không rõ',
       type: json['type'],
       description: json['description'],
+      peopleCount: (json['people_count'] as num?)?.toInt() ?? 1,
       lat: json['lat'] != null ? (json['lat'] as num).toDouble() : null,
       lng: json['lng'] != null ? (json['lng'] as num).toDouble() : null,
       status: json['status'] ?? 'PENDING',
@@ -83,6 +86,68 @@ class SosService {
     } catch (e) {
       print('Error fetching SOS requests: $e');
       return [];
+    }
+  }
+
+  Future<List<SosRequestModel>> fetchEmergencySosRequests({required String token}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/sos-requests/emergency-locations'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body)['items'] ?? [];
+        return data.map((item) => SosRequestModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching emergency SOS requests: $e');
+      return [];
+    }
+  }
+
+  Future<bool> acceptSosRequest({
+    required int sosId,
+    required String token,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/sos-requests/$sosId/accept'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (e) {
+      print('Error accepting SOS request: $e');
+      return false;
+    }
+  }
+
+  Future<SosRequestModel?> fetchSosById({
+    required int sosId,
+    required String token,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/sos-requests/$sosId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        return SosRequestModel.fromJson(json.decode(response.body) as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching SOS by id: $e');
+      return null;
     }
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
-import '../screens/map_screen.dart';
-import '../screens/sos_screen.dart';
+import '../screens/rescuer/map_screen.dart';
+import '../screens/rescuer/sos_screen.dart';
 import '../screens/news_screen.dart';
 import '../screens/profile_screen.dart';
 

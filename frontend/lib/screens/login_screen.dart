@@ -6,6 +6,7 @@ import '../widgets/shell_screen.dart';
 import '../services/auth_service.dart';
 import '../services/user_session.dart';
 import '../models/user_model.dart';
+import '../features/sub_rescuer/sub_rescuer_shell.dart';
 import 'offline_sos_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,11 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
         if (response != null) {
           // Save session
           UserSession().saveSession(response);
-          
-          // Success: Navigation to ShellScreen
+
+          final Widget next = response.user.isRescuer
+              ? const SubRescuerShellScreen()
+              : const ShellScreen();
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const ShellScreen()),
+            MaterialPageRoute(builder: (context) => next),
           );
         } else {
           // Failure: Display error

@@ -19,6 +19,9 @@ class User {
     required this.createdAt,
   });
 
+  /// Vai trò đội cứu hộ vận hành giao diện sub rescuer.
+  bool get isRescuer => role.toUpperCase() == 'RESCUER';
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
